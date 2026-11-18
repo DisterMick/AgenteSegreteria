@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** definizione del progetto. Questa repository contiene la documentazione iniziale; applicazione, database e integrazioni non sono ancora implementati. Non ci sono comandi di avvio da eseguire.
+**Stato al 18 novembre 2026:** documentazione iniziale e scheletro locale Next.js/TypeScript. La pagina mostra i dati fittizi della pizzeria e verifica le disponibilità simulate sul server. Voce, salvataggio prenotazioni, autenticazione e database non sono ancora implementati.
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 
@@ -34,14 +34,52 @@ Il modello interpreta la conversazione; il backend applica i permessi e le regol
 
 Pagamenti, modifiche e cancellazioni di prenotazioni esistenti, integrazioni con gestionali commerciali, più ristoranti e telefonia reale sono fuori dalla prima versione.
 
-## Tecnologie proposte
+## Avvio locale
 
-Next.js e TypeScript per interfaccia e backend; OpenAI Realtime via WebRTC per la voce; Supabase PostgreSQL per le prenotazioni; Zod per validare gli input; Vitest e Playwright per il collaudo. Le dipendenze verranno scelte e fissate durante il setup. L'Agents SDK è un candidato da valutare, non un requisito già adottato.
+Requisiti: Node.js 22.12 o successivo della serie 22, oppure Node.js 24, con npm. Le versioni delle dipendenze sono fissate in `package.json` e `package-lock.json`.
+
+```sh
+npm ci
+npm run dev
+```
+
+Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). Non servono chiavi API né un file `.env`; `.env.example` documenta questa scelta. Avvio e prove non chiamano servizi AI o database e non generano consumi API.
+
+La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Tutti i tavoli del simulatore partono liberi: nessuna richiesta blocca posti o salva prenotazioni.
+
+```sh
+npm test
+npm run lint
+npm run typecheck
+npm run build
+npm start
+```
+
+`npm start` avvia la build di produzione già generata. I server ascoltano solo sull'indirizzo locale; lo scheletro non è una demo remota protetta.
+
+## Struttura dello scheletro
+
+| Percorso | Responsabilità |
+| --- | --- |
+| `src/app/` | Pagina, layout, stili e API HTTP |
+| `src/components/availability-form.tsx` | Modulo con attesa, esito ed errori |
+| `src/data/restaurant.json` | Dati fittizi versionati del locale |
+| `src/lib/restaurant.ts` | Validazione del dataset e orologio del ristorante |
+| `src/lib/availability.ts` | Regole condivise di disponibilità simulata |
+| `*.test.ts` | Prove deterministiche delle regole e del confine HTTP |
+
+`POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `status: "available"`, dettagli, conteggio tavoli idonei e `simulated: true`, oppure HTTP 400 con `status: "invalid"` e un messaggio. Non è ancora lo strumento vocale `check_availability`: sessioni e revisioni verranno aggiunte con il controller della fase A.
+
+## Tecnologie
+
+Implementati: Next.js, React e TypeScript per interfaccia e backend, Zod per validare dati e input, Vitest per i test. Setup basato sulla [guida ufficiale Next.js](https://nextjs.org/docs/app/getting-started/installation), senza font remoti o servizi esterni richiesti in avvio.
+
+Previsti: OpenAI Realtime via WebRTC per la voce, Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser. L'Agents SDK è un candidato da valutare, non una dipendenza adottata.
 
 Il modello e le tariffe vanno verificati sull'account e sulla documentazione ufficiale prima delle prove a pagamento. Il budget di laboratorio proposto nel brief è di **9 USD**, non un credito verificato né una stima sufficiente per un servizio operativo.
 
 ## Da dove iniziare
 
-Seguire la fase 0 del [piano di sviluppo](docs/PIANO_DI_SVILUPPO.md), poi implementare la demo locale con dati fittizi. Le prime prove di logica devono funzionare anche senza chiamate a servizi a pagamento.
+Proseguire con la fase A del [piano di sviluppo](docs/PIANO_DI_SVILUPPO.md), dopo aver verificato account, modello e budget. La preparazione economica della fase 0 resta aperta. Vedi anche lo [stato delle dipendenze di sviluppo](docs/SICUREZZA_E_PRIVACY.md).
 
 Non inserire chiavi API, credenziali, audio reali o dati di clienti nella repository pubblica. Nessuna licenza è stata ancora scelta.

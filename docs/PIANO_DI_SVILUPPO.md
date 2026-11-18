@@ -1,15 +1,17 @@
 # Piano di sviluppo
 
-Tutte le attività seguenti sono da realizzare. Le fasi hanno criteri di uscita; non sono impegni su date o costi già verificati.
+Le caselle indicano lo stato dell'implementazione. Le fasi hanno criteri di uscita; non sono impegni su date o costi già verificati.
 
 ## Fase 0 — Preparazione
 
 - [ ] Confermare perimetro e regole demo del [PRD](PRD-agente-segreteria.md).
-- [ ] Collegare la copia locale alla repository GitHub e verificare lo stato remoto prima di pubblicare.
-- [ ] Scegliere versioni supportate di runtime e dipendenze, fissarle e conservare il lockfile.
-- [ ] Creare lo scheletro Next.js/TypeScript e una configurazione di esempio senza segreti, con esclusioni Git appropriate.
+- [x] Collegare la copia locale alla repository GitHub e verificare lo stato remoto prima di pubblicare.
+- [x] Fissare versioni di runtime e dipendenze e conservare il lockfile; lo stato degli avvisi è documentato in sicurezza e privacy.
+- [x] Creare lo scheletro Next.js/TypeScript e una configurazione di esempio senza segreti, con esclusioni Git appropriate.
 - [ ] Verificare accesso ai servizi, disponibilità del modello e tariffe correnti; assegnare il budget effettivo.
-- [ ] Implementare dataset fittizio e primo test senza rete delle regole data/turno/coperti.
+- [x] Implementare dataset fittizio e primo test senza rete delle regole data/turno/coperti.
+
+Lo scheletro include una verifica HTTP di sola lettura, prima delle sessioni vocali. Nessuna integrazione a pagamento è attiva; la fase 0 resta aperta sulla verifica degli account e del budget.
 
 **Uscita:** progetto avviabile localmente con istruzioni ripetibili, dati validati, nessun segreto versionato e nessuna chiamata a pagamento involontaria. Per il codice, prevedere controlli di tipi, lint e test pertinenti eseguibili anche in CI.
 

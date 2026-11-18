@@ -1,6 +1,6 @@
 # Architettura proposta
 
-Stato: progetto tecnico iniziale, nessun componente ancora implementato.
+Stato: scheletro Next.js/TypeScript con pagina, dataset fittizio validato e `POST /api/availability` di sola lettura. Diagramma e flussi seguenti descrivono l'architettura prevista; voce, controller conversazionale, autenticazione e persistenza non sono ancora implementati.
 
 ## Componenti e confini
 
