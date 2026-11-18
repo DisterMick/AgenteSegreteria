@@ -55,7 +55,7 @@ Valori applicati alla voce Realtime locale; la disponibilità effettiva del cred
 | Limite | Valore |
 | --- | --- |
 | Budget complessivo laboratorio | 9 USD, disponibilità effettiva da verificare |
-| Budget giornaliero | 1,50 USD |
+| Budget giornaliero | 2,00 USD |
 | Budget per sessione | 0,50 USD |
 | Durata massima sessione | 3 minuti |
 | Sessioni vocali simultanee | 1 |

@@ -18,10 +18,10 @@ describe("plafond vocale persistente", () => {
     budget.finish("one");
     expect(new VoiceBudget(budget.path).read().reservedCents).toBe(50);
   });
-  it("consente tre tentativi da 0,50 USD e blocca il quarto senza rimborsi", () => {
-    for (const id of ["one", "two", "three"]) { budget.reserve(id, now); budget.finish(id); }
-    expect(budget.read().dailyCents).toBe(150);
-    expect(() => budget.reserve("four", now)).toThrow("DAILY_BUDGET");
+  it("consente quattro tentativi da 0,50 USD e blocca il quinto senza rimborsi", () => {
+    for (const id of ["one", "two", "three", "four"]) { budget.reserve(id, now); budget.finish(id); }
+    expect(budget.read().dailyCents).toBe(200);
+    expect(() => budget.reserve("five", now)).toThrow("DAILY_BUDGET");
   });
   it("resetta solo il plafond giornaliero alla mezzanotte italiana", () => {
     budget.reserve("one", new Date("2026-11-18T22:30:00Z")); budget.finish("one");

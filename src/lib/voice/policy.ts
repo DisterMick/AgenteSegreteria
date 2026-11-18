@@ -3,7 +3,7 @@ export const voicePolicy = {
   voice: "marin",
   durationSeconds: 180,
   reserveCents: 50,
-  dailyCents: 150,
+  dailyCents: 200,
   totalCents: 900,
   stopAtUsd: 0.40,
   maxResponses: 24,

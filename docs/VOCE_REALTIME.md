@@ -37,10 +37,10 @@ La demo accetta solo host di loopback. Le richieste di creazione e chiusura rich
 | Contesto dopo istruzioni | Massimo 2.048 token, con troncamento |
 | Stop sul consumo stimato | A 0,40 USD osservati; può restare consumo in corso |
 | Quota prudenziale per tentativo | 0,50 USD |
-| Plafond giornaliero | 1,50 USD, giorno `Europe/Rome` |
+| Plafond giornaliero | 2,00 USD, giorno `Europe/Rome` |
 | Plafond totale | 9 USD |
 
-**Il plafond impegnato non è la spesa fatturata.** Ogni tentativo che raggiunge il provider impegna 0,50 USD e non viene rimborsato localmente, nemmeno se termina presto o il provider lo rifiuta. Questo permette al massimo tre tentativi al giorno e diciotto complessivi. Il plafond giornaliero è stato portato da 1 a 1,50 USD su richiesta dell'utilizzatore per consentire un'ulteriore prova manuale. Il costo stimato dai token viene mostrato separatamente, senza sconti cache per prudenza; non include altri usi dell'account o componenti non osservate.
+**Il plafond impegnato non è la spesa fatturata.** Ogni tentativo che raggiunge il provider impegna 0,50 USD e non viene rimborsato localmente, nemmeno se termina presto o il provider lo rifiuta. Questo permette al massimo quattro tentativi al giorno e diciotto complessivi. Il plafond giornaliero è stato portato da 1,50 a 2,00 USD su richiesta dell'utilizzatore per provare il nuovo flusso di prenotazione. Il costo stimato dai token viene mostrato separatamente, senza sconti cache per prudenza; non include altri usi dell'account o componenti non osservate.
 
 Le tariffe Realtime usate nella stima sono in USD per milione di token: testo input 0,60/output 2,40; audio input 10/output 20. Se mancano i dettagli viene applicata la tariffa audio più alta. La trascrizione input separata usa `gpt-4o-mini-transcribe` in italiano; per prudenza tutti i suoi token input/output sono stimati a 20 USD/M, sopra le tariffe della [scheda ufficiale](https://developers.openai.com/api/docs/models/gpt-4o-mini-transcribe). È una sovrastima, non la tariffa fatturata. I consumi ASR concorrono allo stesso stop a 0,40 USD. Uso mancante o invalido chiude la chiamata. Il modello ASR è supportato dal contratto Realtime ma segnalato deprecated: richiederà migrazione quando il provider lo ritirerà.
 
