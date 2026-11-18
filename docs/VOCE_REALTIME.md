@@ -35,10 +35,10 @@ La demo accetta solo host di loopback. Le richieste di creazione e chiusura rich
 | Contesto dopo istruzioni | Massimo 2.048 token, con troncamento |
 | Stop sul consumo stimato | A 0,40 USD osservati; può restare consumo in corso |
 | Quota prudenziale per tentativo | 0,50 USD |
-| Plafond giornaliero | 1 USD, giorno `Europe/Rome` |
+| Plafond giornaliero | 1,50 USD, giorno `Europe/Rome` |
 | Plafond totale | 9 USD |
 
-**Il plafond impegnato non è la spesa fatturata.** Ogni tentativo che raggiunge il provider impegna 0,50 USD e non viene rimborsato localmente, nemmeno se termina presto o il provider lo rifiuta. Questo permette al massimo due tentativi al giorno e diciotto complessivi. Il costo stimato dai token viene mostrato separatamente, senza sconti cache per prudenza; non include altri usi dell'account o componenti non osservate.
+**Il plafond impegnato non è la spesa fatturata.** Ogni tentativo che raggiunge il provider impegna 0,50 USD e non viene rimborsato localmente, nemmeno se termina presto o il provider lo rifiuta. Questo permette al massimo tre tentativi al giorno e diciotto complessivi. Il plafond giornaliero è stato portato da 1 a 1,50 USD su richiesta dell'utilizzatore per consentire un'ulteriore prova manuale. Il costo stimato dai token viene mostrato separatamente, senza sconti cache per prudenza; non include altri usi dell'account o componenti non osservate.
 
 Le tariffe usate nella stima, verificate il 18 novembre 2026 sulla [scheda ufficiale del modello](https://developers.openai.com/api/docs/models/gpt-realtime-2.1-mini), sono in USD per milione di token: testo input 0,60/output 2,40; audio input 10/output 20. Se mancano i dettagli audio/testo viene applicata la tariffa audio più alta. Dati d'uso assenti o non validi chiudono la sessione anziché proseguire senza controllo. Non si abilita un servizio di trascrizione input separato.
 

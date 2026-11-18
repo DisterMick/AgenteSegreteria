@@ -93,7 +93,7 @@ export function VoiceCall() {
       <p>Parli con un assistente AI. L’audio viene elaborato da OpenAI; l’app non salva registrazioni o trascrizioni. Usa solo dati fittizi: non vengono create prenotazioni.</p>
       <div className="voice-budget" aria-label="Controllo della spesa">
         <div><span>Plafond impegnato</span><strong>{status ? usd(status.budget.reservedCents / 100) : "—"} / 9 USD</strong></div>
-        <div><span>Oggi, ora italiana</span><strong>{status ? usd(status.budget.dailyCents / 100) : "—"} / 1 USD</strong></div>
+        <div><span>Oggi, ora italiana</span><strong>{status ? usd(status.budget.dailyCents / 100) : "—"} / {status ? usd(status.policy.dailyCents / 100) : "—"}</strong></div>
         <div><span>Costo stimato dai token</span><strong>{status ? usd(status.budget.observedUsd) : "—"}</strong></div>
       </div>
       <p className="voice-help">Ogni tentativo impegna 0,50 USD del plafond, anche se termina prima. Una chiamata alla volta, massimo 3 minuti. Le stime non sono il saldo o la fattura OpenAI.</p>

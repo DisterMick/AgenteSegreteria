@@ -46,7 +46,7 @@ npm run dev
 
 Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). La verifica testuale e i test non richiedono credenziali e non generano consumi API. Per parlare con l'agente crea `.env.local` con `OPENAI_API_KEY` e `OPENAI_REALTIME_ENABLED=true`, poi riavvia il server: vedi [configurazione voce](docs/VOCE_REALTIME.md). Non incollare la chiave in chat né in variabili pubbliche.
 
-La chiamata impegna 0,50 USD del plafond locale: massimo 1 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
+La chiamata impegna 0,50 USD del plafond locale: massimo 1,50 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
 
 La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Tutti i tavoli del simulatore partono liberi: nessuna richiesta blocca posti o salva prenotazioni.
 
