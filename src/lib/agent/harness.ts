@@ -163,7 +163,7 @@ export function processAgentProposal(
     }
 
     case "get_restaurant_info": {
-      const info: Record<AgentProposal & { type: "get_restaurant_info" }["topic"], unknown> = {
+      const info = {
         hours: { opening_days: restaurant.opening_days, hours: restaurant.hours, shifts: restaurant.shifts },
         menu: restaurant.menu,
         allergens: { menu: restaurant.menu.map((item) => ({ name: item.name, allergens: item.allergens })), notice: restaurant.allergen_notice },
