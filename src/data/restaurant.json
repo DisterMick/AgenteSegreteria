@@ -1,0 +1,26 @@
+{
+  "name": "Pizzeria Demo",
+  "version": 1,
+  "reviewed_on": "2026-11-18",
+  "timezone": "Europe/Rome",
+  "opening_days": [2, 3, 4, 5, 6, 0],
+  "hours": { "opens": "19:00", "closes": "23:00" },
+  "booking_horizon_days": 30,
+  "max_party_size": 4,
+  "shifts": [
+    { "start": "19:00", "end": "21:00" },
+    { "start": "21:00", "end": "23:00" }
+  ],
+  "tables": [
+    { "id": "T1", "seats": 2 },
+    { "id": "T2", "seats": 2 },
+    { "id": "T3", "seats": 4 },
+    { "id": "T4", "seats": 4 }
+  ],
+  "menu": [
+    { "name": "Margherita", "ingredients": "Pomodoro, mozzarella, basilico", "allergens": ["grano", "latte"] },
+    { "name": "Marinara", "ingredients": "Pomodoro, aglio, origano", "allergens": ["grano"] }
+  ],
+  "services": ["Consumazione al tavolo"],
+  "allergen_notice": "Menu fittizio: non garantisce assenza di contaminazioni. Per richieste non documentate occorre rivolgersi al personale."
+}

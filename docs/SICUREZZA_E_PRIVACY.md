@@ -2,6 +2,14 @@
 
 Questi sono requisiti da implementare e verificare. Non descrivono controlli già attivi né attestano conformità per un servizio reale.
 
+## Stato delle dipendenze dello scheletro
+
+Il 18 novembre 2026 `npm audit` segnala una vulnerabilità di esaurimento delle risorse in `picomatch`, dipendenza transitiva degli strumenti di sviluppo e test. L'[avviso GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) non indica una versione corretta disponibile. Gli avvisi propagati ai pacchetti che lo usano non rappresentano vulnerabilità indipendenti.
+
+Questi strumenti operano sui file del progetto; la verifica di disponibilità non accetta pattern glob dal chiamante. Non esporre server di sviluppo o runner di test in rete e non eseguire tooling su repository non attendibili. Ricontrollare l'avviso al prossimo aggiornamento; non forzare downgrade del framework o override incompatibili per azzerare il conteggio. Verificare separatamente le dipendenze runtime con `npm audit --omit=dev`.
+
+ESLint 10 evita di adottare la serie 9 fuori supporto. Alcuni plugin inclusi nella configurazione Next.js dichiarano ancora compatibilità fino a ESLint 9: npm emette avvisi sui peer durante l'installazione. Installazione e lint vanno verificati insieme; aggiornare la configurazione appena i plugin dichiareranno supporto ufficiale.
+
 ## Confini di fiducia
 
 | Origine del rischio | Controllo richiesto | Evidenza di collaudo |

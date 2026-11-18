@@ -1,6 +1,6 @@
 # Piano di collaudo e valutazione
 
-Stato iniziale: scenari definiti, nessuna prova ancora eseguita. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
+Stato: lo scheletro include 22 test automatici delle regole di disponibilità, del dataset e dell'endpoint HTTP. La suite completa E01–E20 e le prove vocali restano da implementare ed eseguire. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
 
 ## Metodo
 

@@ -1,6 +1,6 @@
 # Contratti degli strumenti e dati
 
-Specifica proposta per l'implementazione, non API già disponibili. Tutti gli argomenti sono validati dal server; campi inattesi vengono rifiutati. Sessione e identità sono ricavate dal contesto autenticato, mai accettate sulla fiducia dal modello.
+Specifica proposta per gli strumenti vocali, non ancora disponibili. Lo scheletro espone soltanto una verifica HTTP simulata di data, turno e coperti, documentata nel README. Tutti gli argomenti saranno validati dal server; campi inattesi vengono rifiutati già nella verifica HTTP. Sessione e identità saranno ricavate dal contesto autenticato, mai accettate sulla fiducia dal modello.
 
 ## Dati del ristorante demo
 
@@ -19,7 +19,7 @@ Specifica proposta per l'implementazione, non API già disponibili. Tutti gli ar
 
 Il menu non garantisce assenza di contaminazioni. Una richiesta di sicurezza alimentare non documentata passa al personale. Non raccogliere diagnosi o dettagli medici nelle note.
 
-Il file dei contenuti dovrà includere versione e data di revisione. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
+Il file `src/data/restaurant.json` include versione e data di revisione ed è validato al caricamento. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
 
 ## Strumenti consentiti
 
