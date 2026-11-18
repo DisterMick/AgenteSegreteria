@@ -1,6 +1,6 @@
 # Voce nel browser con OpenAI Realtime
 
-Stato: integrazione implementata e verificata con servizi simulati. La prova con audio e modello reali richiede una chiave OpenAI del responsabile del progetto; non è stata eseguita senza credenziali.
+Stato: integrazione implementata, verificata con servizi simulati e con una prima sessione OpenAI reale il 18 novembre 2026. Verificati connessione, generazione audio e chiusura; restano da valutare qualità percepita, conversazione completa e interruzioni del parlato.
 
 ## Abilitazione locale
 
@@ -56,6 +56,6 @@ Questa persistenza è adatta al laboratorio con un solo server Node e disco loca
 
 ## Verifiche
 
-I test coprono quota giornaliera/totale, concorrenza, riavvio, contatori corrotti, deduplicazione, strumenti vietati, timer, chiusura incerta, origine HTTP, dimensione SDP, segreti non esposti, microfono negato e rilascio risorse. Il comportamento audio reale, le interruzioni del parlato e l'effettivo costo richiedono ancora una prova breve con credenziali e relativo rapporto nel benchmark.
+I test coprono quota giornaliera/totale, concorrenza, riavvio, contatori corrotti, deduplicazione, strumenti vietati, timer, chiusura incerta, origine HTTP, dimensione SDP, segreti non esposti, microfono negato e rilascio risorse. La prima sessione reale è riportata nel [benchmark](VOICE_BENCHMARK.md): non sostituisce il campione conversazionale, le prove di interruzione o la riconciliazione della fattura provider.
 
 Riferimenti ufficiali: [WebRTC](https://developers.openai.com/api/docs/guides/voice-webrtc?api=realtime), [controllo server](https://developers.openai.com/api/docs/guides/voice-server-controls?voice-api=realtime), [chiusura delle chiamate WebRTC](https://developers.openai.com/api/reference/resources/realtime/subresources/calls/methods/hangup).

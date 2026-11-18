@@ -1,6 +1,6 @@
 # Benchmark delle voci — Protocollo iniziale
 
-**Stato:** definizione delle prove, nessuna misura eseguita.
+**Stato:** protocollo comparativo ancora da eseguire. Prima verifica operativa di OpenAI Realtime completata il 18 novembre 2026; non è un confronto tra voci né una misura di naturalità.
 
 ## Candidati da ascoltare
 
@@ -33,3 +33,20 @@ Usare almeno tre ripetizioni per script e per modello con hardware, versione, li
 ## Esito
 
 Registrare per ogni candidato: data, versione, licenza, ambiente, audio d'esempio solo con contenuti fittizi, metriche, difetti e decisione. **Nessun vincitore è stato scelto né verificato qui.**
+
+### Prima verifica operativa — 18 novembre 2026
+
+| Voce | Risultato osservato |
+| --- | --- |
+| Ambiente | Next.js locale, browser integrato, WebRTC e controllo server WebSocket |
+| Modello / voce | `gpt-realtime-2.1-mini` / `marin` |
+| Accesso | Chiave valida e accesso al modello confermati con HTTP 200; segreto escluso da Git |
+| Generazione | Risposta reale `completed`; output audio osservato e lettore in riproduzione |
+| Richiesta di prova | Domanda testuale sul menu inviata nella stessa sessione tramite il canale di controllo, senza aprire una seconda chiamata |
+| Risposta visibile | Testo dell'assistente sul menu fittizio, con riferimento alla Margherita e ai suoi ingredienti |
+| Chiusura | Lettore arrestato, microfono spento e nessuna chiamata attiva nel backend |
+| Costo stimato cumulativo | 0,0136104 USD, calcolato dai token; non è una fattura riconciliata |
+| Plafond impegnato | 1 USD giornaliero/complessivo: due tentativi da 0,50 USD, incluso il precedente rifiuto per chiave non valida |
+| Nuove chiamate | Bloccate dal limite giornaliero; contatori e soglie non azzerati |
+
+Non sono state misurate latenza p50/p95, naturalità, pronuncia o qualità del barge-in. L'ascolto percepito e una conversazione vocale completa richiedono ancora conferma dell'utilizzatore e prove dedicate. Nessuna registrazione audio è stata salvata.

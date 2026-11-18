@@ -1,6 +1,6 @@
 # Architettura proposta
 
-Stato: app locale con endpoint di sola lettura, harness deterministico e integrazione vocale OpenAI Realtime opzionale. Sessione e contatori sono governati dal backend. Audio reale e tool call con modello richiedono ancora un collaudo con credenziali. Autenticazione per hosting e salvataggio prenotazioni restano da implementare. Configurazione e limiti in [VOCE_REALTIME.md](VOCE_REALTIME.md).
+Stato: app locale con endpoint di sola lettura, harness deterministico e integrazione vocale OpenAI Realtime opzionale. Sessione e contatori sono governati dal backend. Prima prova reale di connessione, generazione audio e chiusura completata; il collaudo conversazionale completo resta aperto. Autenticazione per hosting e salvataggio prenotazioni restano da implementare. Configurazione e limiti in [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 ## Componenti e confini
 

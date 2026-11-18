@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** app locale Next.js/TypeScript con disponibilità simulata, harness e integrazione OpenAI Realtime nel browser. La voce richiede una chiave server e abilitazione esplicita; l'audio reale non è ancora stato collaudato con credenziali. Salvataggio prenotazioni, autenticazione per hosting e database non sono implementati.
+**Stato al 18 novembre 2026:** app locale Next.js/TypeScript con disponibilità simulata, harness e OpenAI Realtime nel browser. Prima prova reale completata: connessione, generazione audio, risposta sul menu e chiusura con microfono spento. La qualità della conversazione e delle interruzioni resta da valutare. Salvataggio prenotazioni, autenticazione per hosting e database non sono implementati.
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 

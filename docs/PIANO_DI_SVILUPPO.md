@@ -27,9 +27,10 @@ L'app include la verifica HTTP di sola lettura e l'integrazione Realtime opziona
 - [x] Collegare `get_restaurant_info` e `check_availability` all'harness attraverso il canale server; test con provider simulato.
 - [ ] Controller con raccolta bozza, revisioni, riepilogo e conferma; creazione simulata chiaramente etichettata.
 - [ ] Richiesta al personale simulata, senza promettere un trasferimento telefonico.
-- [ ] Misura di una sessione breve; valutazione dell'Agents SDK solo se riduce il lavoro necessario.
+- [x] Eseguire una prima sessione reale breve e registrare connessione, risposta audio, chiusura e costo stimato nel benchmark.
+- [ ] Misurare latenza, barge-in, qualità percepita e conversazione vocale completa; valutare l'Agents SDK solo se riduce il lavoro necessario.
 
-La richiesta corrente adotta OpenAI Realtime come prima integrazione. Il modello testuale separato/LiveKit resta uno studio futuro. Test automatici di trasporto simulato e budget disponibili; la prima conversazione reale, la qualità del barge-in e le misure di costo/latency richiedono ancora credenziali. Vedi [VOCE_REALTIME.md](VOCE_REALTIME.md).
+La richiesta corrente adotta OpenAI Realtime come prima integrazione. Il modello testuale separato/LiveKit resta uno studio futuro. Test automatici e prima sessione reale disponibili; qualità del barge-in, latenza e intero campione conversazionale restano da misurare. Vedi [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 **Uscita:** una conversazione completa nel browser, una correzione gestita senza usare risultati vecchi, un errore di connessione leggibile e consumi registrati. Nessuna simulazione viene presentata come prenotazione reale.
 
