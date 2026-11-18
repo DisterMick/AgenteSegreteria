@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** scheletro locale Next.js/TypeScript con disponibilità simulata e primo harness testuale deterministico (solo codice e test, nessuna interfaccia di chat). Voce, LLM, salvataggio prenotazioni, autenticazione e database non sono ancora implementati.
+**Stato al 18 novembre 2026:** app locale Next.js/TypeScript con disponibilità simulata, harness e integrazione OpenAI Realtime nel browser. La voce richiede una chiave server e abilitazione esplicita; l'audio reale non è ancora stato collaudato con credenziali. Salvataggio prenotazioni, autenticazione per hosting e database non sono implementati.
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 
@@ -22,6 +22,7 @@ Il modello interpreta la conversazione; il backend applica i permessi e le regol
 | [Sicurezza e privacy](docs/SICUREZZA_E_PRIVACY.md) | Confini di fiducia, accessi, dati personali e costi |
 | [Collaudo](docs/COLLAUDO.md) | Casi normali, errori, attacchi e metriche |
 | [Piano di sviluppo](docs/PIANO_DI_SVILUPPO.md) | Fasi, dipendenze e condizioni per avanzare |
+| [Voce Realtime](docs/VOCE_REALTIME.md) | Configurazione, limiti effettivi, costi e recupero |
 
 ## Perimetro della prima versione
 
@@ -43,7 +44,9 @@ npm ci
 npm run dev
 ```
 
-Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). Non servono chiavi API né un file `.env`; `.env.example` documenta questa scelta. Avvio e prove non chiamano servizi AI o database e non generano consumi API.
+Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). La verifica testuale e i test non richiedono credenziali e non generano consumi API. Per parlare con l'agente crea `.env.local` con `OPENAI_API_KEY` e `OPENAI_REALTIME_ENABLED=true`, poi riavvia il server: vedi [configurazione voce](docs/VOCE_REALTIME.md). Non incollare la chiave in chat né in variabili pubbliche.
+
+La chiamata impegna 0,50 USD del plafond locale: massimo 1 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
 
 La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Tutti i tavoli del simulatore partono liberi: nessuna richiesta blocca posti o salva prenotazioni.
 
@@ -67,21 +70,23 @@ npm start
 | `src/lib/restaurant.ts` | Validazione del dataset e orologio del ristorante |
 | `src/lib/availability.ts` | Regole condivise di disponibilità simulata |
 | `src/lib/agent/harness.ts` | Controller puro: allowlist, bozza, revisioni e blocco delle scritture |
+| `src/lib/voice/` | WebRTC browser, controllo server, plafond persistente e stima consumi |
+| `src/app/api/voice/route.ts` | Avvio, stato e stop della sessione locale, con verifica origine e cookie privato |
 | `*.test.ts` | Prove deterministiche delle regole e del confine HTTP |
 
-`POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `status: "available"`, dettagli, conteggio tavoli idonei e `simulated: true`, oppure HTTP 400 con `status: "invalid"` e un messaggio. Non è ancora lo strumento vocale `check_availability`: sessioni e revisioni verranno aggiunte con il controller della fase A.
+`POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `status: "available"`, dettagli, conteggio tavoli idonei e `simulated: true`, oppure HTTP 400 con `status: "invalid"` e un messaggio. La voce usa le stesse regole attraverso l'harness e il canale server, conservando bozza e revisioni sul server.
 
 ## Tecnologie
 
 Implementati: Next.js, React e TypeScript per interfaccia e backend, Zod per validare dati e input, Vitest per i test. Setup basato sulla [guida ufficiale Next.js](https://nextjs.org/docs/app/getting-started/installation), senza font remoti o servizi esterni richiesti in avvio.
 
-Previsti: pipeline STT–LLM–TTS modulare con LiveKit Agents (da validare), Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser. OpenAI Realtime resta un'alternativa da misurare; nessuna dipendenza vocale è stata installata.
+Per la prima integrazione vocale è adottato OpenAI Realtime via WebRTC, con `ws` per il controllo server. LiveKit/STT–LLM–TTS resta un confronto futuro, senza worker o dipendenze aggiunti. Restano previsti Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser.
 
 Il modello e le tariffe vanno verificati sull'account e sulla documentazione ufficiale prima delle prove a pagamento. Il budget di laboratorio proposto nel brief è di **9 USD**, non un credito verificato né una stima sufficiente per un servizio operativo.
 
 ## Laboratorio offline dell'agente
 
-Il controller in `src/lib/agent/harness.ts` accetta solo proposte strutturate (`update_draft`, `check_availability`, `prepare_confirmation`, `get_restaurant_info`, `request_human_handoff`) e ne verifica schema e revisione. I risultati sono simulati o informativi: **non crea prenotazioni e non conferma operazioni persistenti**. I test documentano casi malevoli senza usare crediti API.
+Il controller in `src/lib/agent/harness.ts` accetta solo proposte strutturate (`update_draft`, `check_availability`, `prepare_confirmation`, `get_restaurant_info`, `request_human_handoff`) e ne verifica schema e revisione. Lo stesso harness viene usato dal backend vocale. I risultati sono simulati o informativi: **non crea prenotazioni e non conferma operazioni persistenti**. I test documentano casi malevoli senza usare crediti API; l'handoff resta non implementato.
 
 Nuovi documenti: [decisione sulla pipeline vocale](docs/ADR-001-VOICE-PIPELINE.md), [protocollo benchmark voce](docs/VOICE_BENCHMARK.md) e [security evals](docs/AGENT_SECURITY_EVALS.md). La CI esegue lint, typecheck, test e build sulle PR.
 

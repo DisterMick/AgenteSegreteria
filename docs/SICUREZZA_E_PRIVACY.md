@@ -2,6 +2,8 @@
 
 Questi sono requisiti da implementare e verificare. Non descrivono controlli già attivi né attestano conformità per un servizio reale.
 
+Per la voce locale sono ora implementati controlli di origine e host loopback, cookie di sessione privato, chiave esclusivamente server, strumenti tramite harness, plafond persistente, timer browser/server e chiusura provider. Le prove automatiche usano un provider simulato; serve ancora la prova audio reale. Configurazione e limiti effettivi sono in [VOCE_REALTIME.md](VOCE_REALTIME.md). L'autenticazione per una demo remota non è implementata.
+
 ## Stato delle dipendenze dello scheletro
 
 Il 18 novembre 2026 `npm audit` segnala una vulnerabilità di esaurimento delle risorse in `picomatch`, dipendenza transitiva degli strumenti di sviluppo e test. L'[avviso GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) non indica una versione corretta disponibile. Gli avvisi propagati ai pacchetti che lo usano non rappresentano vulnerabilità indipendenti.
@@ -48,7 +50,7 @@ Prima di un pilota reale definire informativa, finalità, basi del trattamento, 
 
 ## Budget e contenimento dei consumi
 
-Valori iniziali proposti, da confermare prima delle prove a pagamento:
+Valori applicati alla voce Realtime locale; la disponibilità effettiva del credito va verificata prima delle prove:
 
 | Limite | Valore |
 | --- | --- |
@@ -58,7 +60,7 @@ Valori iniziali proposti, da confermare prima delle prove a pagamento:
 | Durata massima sessione | 3 minuti |
 | Sessioni vocali simultanee | 1 |
 
-Il backend deve verificare il budget prima di aprire una sessione, riservare margine per il consumo in corso e aggiornare il totale con i dati d'uso disponibili. La pagina mostra la stima e distingue i costi non ancora riconciliati. Al limite interrompere nuove sessioni e chiudere la connessione vocale; riaprire la pagina non azzera i contatori persistiti.
+Il backend verifica e impegna 0,50 USD di plafond prima di ogni tentativo, senza rimborso locale; mostra separatamente una stima prudente dai token osservati sul canale server. Interrompe a 0,40 USD stimati, 24 risposte o 180 secondi. Al limite chiude anche la chiamata OpenAI. Riaprire la pagina non azzera i contatori su disco; il ledger tecnico resta conservato per non azzerare il plafond complessivo e non contiene nomi/audio/trascrizioni.
 
 Le soglie applicative non garantiscono un tetto contabile esatto: ritardi di rendicontazione e consumo già avviato possono causare scostamenti. Impostare anche i controlli disponibili sull'account provider, verificandone l'effettivo comportamento. Nessuna tariffa fissa è assunta da questo documento.
 

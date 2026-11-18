@@ -1,33 +1,31 @@
 # Architettura proposta
 
-Stato: scheletro Next.js/TypeScript con endpoint di sola lettura e un harness deterministico con proposte di tool allowlistate e revisioni. **Nessun LLM, audio, tool HTTP per agenti, autenticazione o salvataggio è implementato.** La pipeline vocale descritta sotto è una proposta.
+Stato: app locale con endpoint di sola lettura, harness deterministico e integrazione vocale OpenAI Realtime opzionale. Sessione e contatori sono governati dal backend. Audio reale e tool call con modello richiedono ancora un collaudo con credenziali. Autenticazione per hosting e salvataggio prenotazioni restano da implementare. Configurazione e limiti in [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 ## Componenti e confini
 
 ```mermaid
 flowchart LR
-    U[Cliente nel browser] <-->|Audio WebRTC| W[Voice Worker LiveKit]
-    W --> STT[Speech-to-Text]
-    STT --> LLM[Modello linguistico]
-    LLM --> TTS[Text-to-Speech intercambiabile]
-    TTS --> W
-    W <-->|Tool calls autorizzate| B[Backend Next.js]
+    U[Cliente nel browser] <-->|Audio WebRTC| W[OpenAI Realtime]
+    U <-->|SDP e cookie locale| B[Backend Next.js]
+    W <-->|WebSocket server: strumenti e uso| B
     B --> C[Controller e validazione]
     C --> R[Dati ristorante approvati]
     C --> D[(PostgreSQL Supabase)]
     P[Pannello personale autenticato] --> B
     C --> L[Eventi tecnici e consumi]
+    B --> F[Ledger locale: plafond e chiamata attiva]
 ```
 
-Nella proposta modulare il worker vocale invia richieste strumenti al backend con identità di sessione verificata. Il browser non deve poter eleggere privilegi né autorizzare scritture. Ogni input proveniente dal browser o dal modello è non attendibile: il backend verifica sessione, argomenti, versione della richiesta e permessi. La disponibilità mostrata non riserva un tavolo.
+Realtime invia richieste strumenti sul canale server autenticato; il controller conserva lo stato e verifica schema, revisione e permessi. Il browser non può eleggere privilegi né autorizzare scritture. La disponibilità mostrata non riserva un tavolo. Database e pannello nel diagramma rimangono componenti futuri.
 
-Per il browser si propone WebRTC tramite LiveKit; identità di sessione e token temporanei saranno emessi dal backend. Le chiavi permanenti rimangono sul server/worker. La scelta è motivata nella [ADR-001](ADR-001-VOICE-PIPELINE.md).
+Il browser usa WebRTC tramite lo scambio SDP unificato; chiave permanente e configurazione restano sul server. Un cookie HttpOnly identifica il proprietario della chiamata locale per stato e stop. La proposta LiveKit nella [ADR-001](ADR-001-VOICE-PIPELINE.md) resta uno studio futuro.
 
 ## Responsabilità
 
 | Componente | Fa | Non può decidere |
 | --- | --- | --- |
-| Worker vocale + STT/LLM/TTS | Trascrive, conversa, pronuncia e propone strumenti | Permessi, capienza, successo della scrittura |
+| OpenAI Realtime | Comprende audio, conversa, pronuncia e propone strumenti | Permessi, capienza, successo della scrittura |
 | Browser | Microfono, audio, stato e inoltro messaggi | Conferme arbitrarie affidabili o accesso DB privilegiato |
 | Backend/controller | Valida, conserva lo stato, lega conferma e bozza, limita consumi | Aggirare i vincoli DB per soddisfare il modello |
 | Database | Transazioni, unicità, assegnazione tavolo/turno | Interpretare il linguaggio del cliente |
@@ -38,16 +36,16 @@ Per il browser si propone WebRTC tramite LiveKit; identità di sessione e token 
 | Area | Proposta | Motivazione |
 | --- | --- | --- |
 | UI e backend | Next.js + TypeScript, una sola applicazione | Riduce servizi da gestire nel laboratorio |
-| Voce | LiveKit Agents + STT/LLM/TTS intercambiabili (proposta) | Confrontare sintesi open source, controllare la latenza e isolare i problemi |
+| Voce | OpenAI Realtime via WebRTC; `ws` sul server | Prima conversazione con controllo server di strumenti e consumi |
 | Orchestrazione | Controller applicativo con quattro strumenti | Regole esplicite e verificabili |
 | Persistenza | Supabase PostgreSQL | Vincoli e operazioni atomiche sulle prenotazioni |
 | Input | Zod più vincoli DB | Controllo di forma e integrità persistente |
 | Test | Vitest, Playwright e prove DB concorrenti | Separare logica, browser e integrità |
 | Dati del locale | File versionato e validato | Contenuti approvati senza ricerca esterna nella prima versione |
 
-LiveKit Agents è il framework candidato per il worker vocale, da verificare in fase A. Il controller di dominio rimane indipendente dai framework e non sposta i controlli nei prompt. Niente database vettoriale o più agenti in questa fase.
+Il controller di dominio rimane indipendente dai framework e non sposta i controlli nei prompt. Niente database vettoriale, worker LiveKit o più agenti in questa fase.
 
-La pipeline a componenti separati è descritta nella [documentazione LiveKit](https://docs.livekit.io/agents/models/pipelines/). Realtime rimane una baseline da confrontare sullo stesso benchmark, non una dipendenza già adottata. Il modello STT, LLM e TTS definitivo sarà scelto solo dopo misure di qualità, latenza e costo.
+La prima configurazione usa `gpt-realtime-2.1-mini` con voce `marin`, output limitato e trascrizione input separata disattivata. Il confronto futuro con una pipeline STT–LLM–TTS resta soggetto allo stesso benchmark e non implica un vincitore già misurato.
 
 ## Flusso di prenotazione
 

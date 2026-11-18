@@ -21,7 +21,7 @@ const draftChangesSchema = z.strictObject({
   name: nameSchema.nullable().optional(),
 }).refine((value) => Object.keys(value).length > 0);
 
-const actionSchema = z.discriminatedUnion("type", [
+export const actionSchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("update_draft"),
     expected_revision: revisionSchema,

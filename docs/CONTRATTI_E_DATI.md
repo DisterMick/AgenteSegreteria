@@ -1,6 +1,6 @@
 # Contratti degli strumenti e dati
 
-Specifica proposta per gli strumenti vocali, non ancora disponibili. Lo scheletro espone soltanto una verifica HTTP simulata di data, turno e coperti, documentata nel README. Tutti gli argomenti saranno validati dal server; campi inattesi vengono rifiutati già nella verifica HTTP. Sessione e identità saranno ricavate dal contesto autenticato, mai accettate sulla fiducia dal modello.
+Specifica del dominio prenotazioni: creazione persistente e handoff non sono ancora disponibili. La voce Realtime usa `restaurant_action`, un unico strumento che invia una proposta all'harness (aggiornamento bozza, disponibilità, informazioni, riepilogo o richiesta handoff). Argomenti e revisione sono verificati dal server; le scritture e l'handoff non implementato sono rifiutati. L'identità della chiamata viene dal canale server OpenAI, lo stato/stop HTTP dal cookie locale, mai da dichiarazioni del modello. Il resto del documento descrive anche i contratti futuri della fase B.
 
 ## Dati del ristorante demo
 

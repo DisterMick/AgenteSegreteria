@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AvailabilityForm } from "@/components/availability-form";
+import { VoiceCall } from "@/components/voice-call";
 import { restaurant, restaurantClock } from "@/lib/restaurant";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default function Home() {
             <p className="eyebrow">01 / Il ristorante</p>
             <h1 id="titolo">{restaurant.name}<span>Si comincia da un tavolo.</span></h1>
             <p className="intro-copy">La base della tua segreteria vocale: informazioni del locale e una prima verifica dei posti disponibili.</p>
-            <div className="status-line"><span className="status-dot" aria-hidden="true" /><strong>Solo dati fittizi</strong><span>Nessun consumo API</span></div>
+            <div className="status-line"><span className="status-dot" aria-hidden="true" /><strong>Solo dati fittizi</strong><span>Voce opzionale con budget limitato</span></div>
           </section>
 
           <div className="workspace">
@@ -61,11 +62,7 @@ export default function Home() {
             <p className="allergen-note">{restaurant.allergen_notice}</p>
           </section>
 
-          <aside className="next-step" aria-label="Prossima fase">
-            <span className="step-number" aria-hidden="true">02</span>
-            <div><h2>Il prossimo passo è la voce.</h2><p>La conversazione con l’assistente AI, le prenotazioni e il pannello del personale non sono ancora collegati.</p></div>
-            <span className="badge badge-muted">In preparazione</span>
-          </aside>
+          <VoiceCall />
         </main>
 
         <footer><span>Agente Segreteria / Pizzeria Demo</span><span>Un locale inventato. Una base concreta.</span></footer>

@@ -1,6 +1,6 @@
 # ADR-001 — Pipeline vocale modulare
 
-**Stato:** scelta architetturale proposta per la fase A, non ancora implementata. **Data:** 18 novembre 2026.
+**Stato:** proposta conservata per confronti futuri; superata per la prima integrazione dalla richiesta di usare OpenAI Realtime. **Data:** 18 novembre 2026. L'implementazione adottata è descritta in [VOCE_REALTIME.md](VOCE_REALTIME.md); non è stato installato un worker LiveKit e nessun benchmark comparativo è stato concluso.
 
 ## Contesto
 

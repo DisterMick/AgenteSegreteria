@@ -6,7 +6,9 @@ Il modello e gli strumenti esterni sono fonti non attendibili. La sicurezza non 
 
 ## Primo livello: modello escluso
 
-Il file `src/lib/agent/harness.ts` accetta una proposta **strutturata** dell'agente, non istruzioni arbitrarie. In questo primo livello non esistono salvataggi o conferme di prenotazione: le azioni di scrittura vengono rifiutate. Lo stato è puramente in memoria e non è esposto da HTTP.
+Il file `src/lib/agent/harness.ts` accetta una proposta **strutturata** dell'agente, non istruzioni arbitrarie. Non esistono salvataggi o conferme di prenotazione: le azioni di scrittura vengono rifiutate. Nel percorso vocale lo stato è in memoria sul server e la bozza è visibile soltanto al browser con il cookie proprietario. La suite offline continua a funzionare senza modello.
+
+La voce aggiunge test con provider simulato per origine HTTP, cookie proprietario, corpi SDP limitati, segreti non esposti, budget persistente, deduplicazione, stop server e rilascio microfono. Non sono prove di resistenza del modello in produzione: vedi [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 | ID | Attacco o guasto | Oracolo / controllo | Stato |
 | --- | --- | --- | --- |

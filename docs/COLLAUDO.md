@@ -1,6 +1,6 @@
 # Piano di collaudo e valutazione
 
-Stato: lo scheletro include 22 test automatici delle regole di disponibilità, del dataset e dell'endpoint HTTP. La suite completa E01–E20 e le prove vocali restano da implementare ed eseguire. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
+Stato: le suite automatiche coprono disponibilità, dataset, confine HTTP, harness e integrazione vocale con trasporto simulato, budget persistente, timer e rilascio risorse. La suite completa E01–E20 e le prove audio con OpenAI reale restano da completare. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
 
 ## Harness offline (prima dei test vocali)
 
