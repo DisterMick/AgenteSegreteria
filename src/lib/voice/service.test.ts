@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type WebSocket from "ws";
@@ -60,7 +60,7 @@ describe("sessione Realtime controllata dal server", () => {
     await service.handle(id, event); await service.handle(id, event);
     expect(socket.sent.filter((item) => item.type === "conversation.item.create")).toHaveLength(1);
     expect(JSON.stringify(socket.sent)).toContain("PUBLIC_INFO");
-    expect(budget.read().observedUsd).toBeCloseTo(0.03);
+    expect(budget.read().observedUsd).toBeCloseTo(0.096);
   });
   it("non esegue scritture proposte dal modello", async () => {
     const { id } = await start();
@@ -104,14 +104,14 @@ describe("sessione Realtime controllata dal server", () => {
     for (let index = 0; index < 24; index++) await service.handle(first.id, done(String(index), [], { input_tokens: 0, output_tokens: 0 }));
     expect(budget.read().active).toBeNull();
     const second = await start();
-    await service.handle(second.id, { type: "session.updated", session: { model: "gpt-realtime-2.1-mini", max_output_tokens: "inf" } });
+    await service.handle(second.id, { type: "session.updated", session: { model: "gpt-realtime-2.1", max_output_tokens: "inf" } });
     expect(budget.read().active).toBeNull();
   });
   it("conteggia una risposta interrotta senza eseguire i suoi strumenti incompleti", async () => {
     const { id } = await start();
     const event = done("interrupted", [{ type: "function_call", name: "restaurant_action", call_id: "call_1", arguments: "{}" }]);
     await service.handle(id, { ...event, response: { ...event.response, status: "cancelled" } });
-    expect(socket.sent).toHaveLength(0); expect(budget.read().observedUsd).toBeCloseTo(0.03);
+    expect(socket.sent).toHaveLength(0); expect(budget.read().observedUsd).toBeCloseTo(0.096);
   });
 
   it("salva dalla voce solo dopo riepilogo riprodotto e nuovo sì, senza esporre la sessione", async () => {
@@ -148,7 +148,7 @@ describe("sessione Realtime controllata dal server", () => {
     await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "early", transcript: "Sì", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
     expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
     const message = socket.sent.findLast((event) => (event.item as { role?: string } | undefined)?.role === "system") as { item: { content: { text: string }[] } };
-    expect(message.item.content[0].text).toContain('"code":"NOT_SAVED"');
+    expect(message.item.content[0].text).toContain('"reason":"SUMMARY_INTERRUPTED"');
   });
 
   it("attende la fine della risposta interrotta prima di rispondere al nuovo turno", async () => {
@@ -167,5 +167,82 @@ describe("sessione Realtime controllata dal server", () => {
     await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "turn", transcript: "Test", usage: { type: "tokens", input_tokens: 20_000, output_tokens: 1 } });
     expect(budget.read().active).toBeNull();
     expect(budget.read().observedUsd).toBeGreaterThan(0.4);
+  });
+
+  it("la pausa blocca anche una richiesta diretta prima di impegnare quote o chiamare OpenAI", async () => {
+    writeFileSync(join(directory, "voice-paused"), "");
+    await expect(service.start("v=0")).rejects.toThrow("VOICE_PAUSED");
+    expect((await service.status()).ready).toBe(false);
+    expect(upstream).not.toHaveBeenCalled(); expect(budget.read().reservedCents).toBe(0);
+  });
+  it("con il modello completo anticipa lo stop a 0,30 USD senza aumentare la quota", async () => {
+    const { id } = await start();
+    for (let index = 0; index < 3; index++) await service.handle(id, done(`priced_${index}`));
+    expect(budget.read().active).not.toBeNull();
+    await service.handle(id, done("priced_3"));
+    expect(budget.read()).toMatchObject({ active: null, reservedCents: 50 });
+    expect(budget.read().observedUsd).toBeCloseTo(0.384);
+  });
+
+  it("accetta il riscontro browser tardivo soltanto nella propria sessione e salva una volta dal sì ASR", async () => {
+    const { id } = await start();
+    for (const [index, action] of [
+      { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } },
+      { type: "prepare_confirmation", expected_revision: 1, name: "Nome Privato" },
+    ].entries()) await service.handle(id, done(String(index), [{ type: "function_call", name: "restaurant_action", call_id: String(index), arguments: JSON.stringify({ action }) }], { input_tokens: 0, output_tokens: 0 }));
+    const question = "Confermi la prenotazione per il diciotto novembre duemilaventisei alle ventuno, per due persone, a nome Nome Privato?";
+    await service.handle(id, done("summary", [{ type: "message", content: [{ transcript: question }] }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "yes" });
+    await expect(service.acknowledgePlayback("other", { type: "playback_finished", response_id: "summary" })).rejects.toThrow("SESSION_NOT_FOUND");
+    await service.acknowledgePlayback(id, { type: "playback_finished", response_id: "unknown" });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
+    await service.acknowledgePlayback(id, { type: "playback_finished", response_id: "summary" });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "yes", transcript: "Sì, esatto", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toHaveLength(1);
+    const logs = readFileSync(join(directory, "voice-events.jsonl"), "utf8");
+    expect(logs).toContain("RESERVATION_SAVED"); expect(logs).toContain("SUMMARY_READY");
+    for (const secret of ["Nome Privato", "Sì, esatto", "test-placeholder", id]) expect(logs).not.toContain(secret);
+  });
+
+  it("un audio cancellato resta non confermabile anche se cancellazione e riscontro precedono response.done", async () => {
+    const { id } = await start();
+    for (const [index, action] of [
+      { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } },
+      { type: "prepare_confirmation", expected_revision: 1, name: "Cliente Test" },
+    ].entries()) await service.handle(id, done(String(index), [{ type: "function_call", name: "restaurant_action", call_id: String(index), arguments: JSON.stringify({ action }) }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "early" });
+    await service.handle(id, { type: "output_audio_buffer.cleared", response_id: "summary" });
+    await service.acknowledgePlayback(id, { type: "playback_finished", response_id: "summary" });
+    await service.handle(id, done("summary", [{ type: "message", content: [{ transcript: "Confermi la prenotazione per il 18/11/2026 alle 21:00, per 2 persone, a nome Cliente Test?" }] }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "early", transcript: "Sì", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
+    expect(readFileSync(join(directory, "voice-events.jsonl"), "utf8")).toContain("SUMMARY_INTERRUPTED");
+  });
+
+  it("registra limite token ed errori sanitizzati, senza salvare messaggi del provider", async () => {
+    const { id } = await start();
+    await service.handle(id, { type: "response.done", response: { id: "limited", usage: { input_tokens: 0, output_tokens: 0 }, status: "incomplete", status_details: { reason: "max_output_tokens" }, output: [] } });
+    await service.handle(id, { type: "error", error: { code: "rate_limit_exceeded", message: "Nome Privato secret-value" } });
+    const logs = readFileSync(join(directory, "voice-events.jsonl"), "utf8");
+    expect(logs).toContain("OUTPUT_LIMIT"); expect(logs).toContain("rate_limit_exceeded");
+    expect(logs).not.toContain("secret-value"); expect(logs).not.toContain("Nome Privato");
+  });
+
+  it.each([true, false])("attende al massimo due secondi il riscontro audio dopo il sì (riscontro: %s)", async (acknowledged) => {
+    const { id } = await start();
+    for (const [index, action] of [
+      { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } },
+      { type: "prepare_confirmation", expected_revision: 1, name: "Cliente Test" },
+    ].entries()) await service.handle(id, done(String(index), [{ type: "function_call", name: "restaurant_action", call_id: String(index), arguments: JSON.stringify({ action }) }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, done("summary", [{ type: "message", content: [{ transcript: "Confermi la prenotazione per il 18/11/2026 alle 21:00, per 2 persone, a nome Cliente Test?" }] }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "yes" });
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "yes", transcript: "Sì", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
+    if (acknowledged) await service.acknowledgePlayback(id, { type: "playback_finished", response_id: "summary" });
+    await vi.advanceTimersByTimeAsync(2001);
+    expect(new Reservations(join(directory, "bookings.json")).read()).toHaveLength(acknowledged ? 1 : 0);
+    const log = readFileSync(join(directory, "voice-events.jsonl"), "utf8");
+    expect(log).toContain(acknowledged ? "RESERVATION_SAVED" : "CONFIRMATION_REQUIRED");
   });
 });

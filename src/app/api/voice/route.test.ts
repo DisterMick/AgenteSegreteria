@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const service = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn(), status: vi.fn() }));
-vi.mock("@/lib/voice/service", () => ({ realtimeVoice: service }));
-import { DELETE, GET, POST } from "./route";
+const service = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn(), status: vi.fn(), acknowledgePlayback: vi.fn() }));
+vi.mock("@/lib/voice/service", async (importOriginal) => ({ ...await importOriginal<typeof import("@/lib/voice/service")>(), realtimeVoice: service }));
+import { DELETE, GET, POST, PATCH } from "./route";
 
 function request(method: string, origin: string | null = "http://127.0.0.1:3000", body = "v=0\r\nsdp") {
   const headers = new Headers({ "Content-Type": "application/sdp" });
@@ -43,5 +43,22 @@ describe("confine HTTP voce locale", () => {
     const input = request("DELETE"); input.headers.set("Cookie", "pizzeria_voice=owned");
     expect((await DELETE(input)).status).toBe(200);
     expect(service.stop).toHaveBeenCalledWith("owned");
+  });
+  it("valida il riscontro audio e lo lega al cookie proprietario senza avviare chiamate", async () => {
+    const input = new Request("http://127.0.0.1:3000/api/voice", { method: "PATCH", headers: { Origin: "http://127.0.0.1:3000", "Content-Type": "application/json", Cookie: "pizzeria_voice=owned" }, body: JSON.stringify({ type: "playback_finished", response_id: "resp_summary" }) });
+    expect((await PATCH(input)).status).toBe(200);
+    expect(service.acknowledgePlayback).toHaveBeenCalledWith("owned", { type: "playback_finished", response_id: "resp_summary" });
+    expect(service.start).not.toHaveBeenCalled();
+  });
+  it("rifiuta origini, payload e autorizzazioni forgiate sul riscontro audio", async () => {
+    for (const [origin, body, expected] of [
+      ["https://evil.example", "{}", 403],
+      ["http://127.0.0.1:3000", "{", 400],
+      ["http://127.0.0.1:3000", "x".repeat(1025), 413],
+      ["http://127.0.0.1:3000", JSON.stringify({ type: "playback_finished", response_id: "resp_summary", confirmed: true }), 400],
+    ] as const) {
+      expect((await PATCH(new Request("http://127.0.0.1:3000/api/voice", { method: "PATCH", headers: { Origin: origin, "Content-Type": "application/json" }, body }))).status).toBe(expected);
+    }
+    expect(service.acknowledgePlayback).not.toHaveBeenCalled();
   });
 });

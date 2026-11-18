@@ -46,7 +46,7 @@ Il browser usa WebRTC tramite lo scambio SDP unificato; chiave permanente e conf
 
 Il controller di dominio rimane indipendente dai framework e non sposta i controlli nei prompt. Niente database vettoriale, worker LiveKit o più agenti in questa fase.
 
-La configurazione usa `gpt-realtime-2.1-mini` con voce `marin`, output fino a 1.024 token, VAD semantico e trascrizione input per legare la conferma al turno effettivo. Il confronto futuro con STT–LLM–TTS resta soggetto allo stesso benchmark.
+La configurazione preparata usa `gpt-realtime-2.1` completo, voce `marin` a velocità 0,95, output fino a 1.024 token, VAD semantico `low` e ASR `gpt-4o-transcribe`. Riscontri audio server/browser sono correlati al riepilogo verificato; il turno ASR autorizza il salvataggio. Il nuovo assetto resta da provare dal vivo; è attiva la pausa locale delle chiamate. Il confronto STT–LLM–TTS resta futuro.
 
 ## Flusso di prenotazione
 

@@ -60,7 +60,9 @@ Valori applicati alla voce Realtime locale; la disponibilità effettiva del cred
 | Durata massima sessione | 3 minuti |
 | Sessioni vocali simultanee | 1 |
 
-Il backend verifica e impegna 0,50 USD di plafond prima di ogni tentativo, senza rimborso locale; mostra separatamente una stima prudente dai token osservati sul canale server. Interrompe a 0,40 USD stimati, 24 risposte o 180 secondi. Al limite chiude anche la chiamata OpenAI. Riaprire la pagina non azzera i contatori su disco; il ledger tecnico resta conservato per non azzerare il plafond complessivo e non contiene nomi/audio/trascrizioni.
+Il backend verifica e impegna 0,50 USD di plafond prima di ogni tentativo, senza rimborso locale; mostra separatamente una stima prudente dai token osservati sul canale server. Con il modello completo interrompe a 0,30 USD stimati, 24 risposte o 180 secondi. Al limite chiude anche la chiamata OpenAI. Riaprire la pagina non azzera i contatori; il ledger non contiene nomi/audio/trascrizioni. Il file `.local/voice-paused` impedisce nuove chiamate prima dell'impegno di quota.
+
+I log locali ruotati `voice-events.jsonl` contengono solo campi tecnici in allowlist; il riferimento diagnostico è distinto dalla sessione privata. Niente testo del provider, argomenti degli strumenti, nomi o trascrizioni. Vedi [diagnostica](VOCE_REALTIME.md#diagnostica-locale). Il riscontro audio dal browser è un segnale correlato a un riepilogo server noto: non concede permessi e non sostituisce l'assenso nel turno ASR sul server.
 
 Le soglie applicative non garantiscono un tetto contabile esatto: ritardi di rendicontazione e consumo già avviato possono causare scostamenti. Impostare anche i controlli disponibili sull'account provider, verificandone l'effettivo comportamento. Nessuna tariffa fissa è assunta da questo documento.
 

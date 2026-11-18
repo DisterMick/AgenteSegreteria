@@ -1,4 +1,4 @@
-import { realtimeVoice } from "@/lib/voice/service";
+import { playbackSchema, realtimeVoice } from "@/lib/voice/service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ const headers = { "Cache-Control": "no-store" };
 const localHosts = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const messages: Record<string, string> = {
   VOICE_NOT_CONFIGURED: "Configura OPENAI_API_KEY e OPENAI_REALTIME_ENABLED nel file .env.local.",
+  VOICE_PAUSED: "Prove vocali in pausa durante le correzioni. Nessun credito viene consumato.",
   CALL_ACTIVE: "Una chiamata è già attiva o in attesa di riconciliazione.",
   DAILY_BUDGET: "Plafond giornaliero esaurito.", TOTAL_BUDGET: "Plafond complessivo esaurito.",
   SESSION_NOT_FOUND: "La sessione non è autorizzata.",
@@ -68,4 +69,28 @@ export async function DELETE(request: Request) {
     await realtimeVoice.stop(owner(request));
     return Response.json({ stopped: true }, { headers: { ...headers, "Set-Cookie": `${cookieName}=; HttpOnly; SameSite=Strict; Path=/api/voice; Max-Age=0` } });
   } catch (error) { return failure(error); }
+}
+
+export async function PATCH(request: Request) {
+  if (!allowed(request)) return Response.json({ message: "Origine non autorizzata." }, { status: 403, headers });
+  if (request.headers.get("Content-Type")?.split(";")[0] !== "application/json") return Response.json({ message: "Invia JSON valido." }, { status: 400, headers });
+  // The acknowledgement is tiny and never carries transcripts or booking details.
+  const reader = request.body?.getReader();
+  let size = 0, body = ""; const decoder = new TextDecoder();
+  try {
+    if (reader) while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      size += value.byteLength;
+      if (size > 1024) { await reader.cancel(); return Response.json({ message: "Richiesta troppo grande." }, { status: 413, headers }); }
+      body += decoder.decode(value, { stream: true });
+    }
+    body += decoder.decode();
+    const parsed = playbackSchema.safeParse(JSON.parse(body));
+    if (!parsed.success) return Response.json({ message: "Riscontro audio non valido." }, { status: 400, headers });
+    await realtimeVoice.acknowledgePlayback(owner(request), parsed.data);
+    return Response.json({ received: true }, { headers });
+  } catch (error) {
+    if (error instanceof SyntaxError) return Response.json({ message: "JSON non valido." }, { status: 400, headers });
+    return failure(error);
+  }
 }

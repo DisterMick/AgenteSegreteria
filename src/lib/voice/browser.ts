@@ -34,6 +34,12 @@ export class BrowserVoice {
         try {
           const message = JSON.parse(event.data);
           if (message.type === "response.output_audio_transcript.done" && typeof message.transcript === "string") caption(message.transcript.slice(0, 2000));
+          if (message.type === "output_audio_buffer.stopped" && typeof message.response_id === "string") {
+            void fetch("/api/voice", { method: "PATCH", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "playback_finished", response_id: message.response_id }), signal: AbortSignal.timeout(5000) })
+              .then((response) => { if (!response.ok) throw new Error("PLAYBACK_ACK_FAILED"); })
+              .catch(() => { if (generation === this.generation) caption("Non riesco a verificare la fine del riepilogo audio. La prenotazione richiede ancora conferma."); });
+          }
           if (message.type === "error") disconnected();
         } catch { disconnected(); }
       };

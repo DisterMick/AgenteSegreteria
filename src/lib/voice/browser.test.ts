@@ -6,7 +6,7 @@ let audio: HTMLAudioElement;
 let network: ReturnType<typeof vi.fn<typeof fetch>>;
 let media: ReturnType<typeof vi.fn>;
 let closePeer: ReturnType<typeof vi.fn<() => void>>;
-let channel: { close: ReturnType<typeof vi.fn>; send: ReturnType<typeof vi.fn>; onopen?: () => void };
+let channel: { close: ReturnType<typeof vi.fn>; send: ReturnType<typeof vi.fn>; onopen?: () => void; onmessage?: (event: { data: string }) => void };
 
 beforeEach(() => {
   track = { stop: vi.fn() }; closePeer = vi.fn();
@@ -30,6 +30,13 @@ describe("risorse vocali del browser", () => {
   it("ascolta prima di parlare, senza generare un saluto all'apertura", async () => {
     const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn());
     channel.onopen?.(); expect(channel.send).not.toHaveBeenCalled();
+    await voice.stop();
+  });
+  it("inoltra soltanto ID e fine riproduzione, senza trascrizioni o permessi di salvataggio", async () => {
+    const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn());
+    channel.onmessage?.({ data: JSON.stringify({ type: "output_audio_buffer.stopped", response_id: "resp_summary", transcript: "Dato Privato" }) });
+    expect(network.mock.calls[1][1]).toMatchObject({ method: "PATCH", body: JSON.stringify({ type: "playback_finished", response_id: "resp_summary" }) });
+    expect(JSON.stringify(network.mock.calls)).not.toContain("Dato Privato");
     await voice.stop();
   });
   it("spegne microfono, peer e audio e richiede la chiusura server", async () => {

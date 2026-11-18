@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** app locale con OpenAI Realtime e prenotazioni persistenti su disco. L'agente ascolta, verifica i tavoli, raccoglie il nome e salva dopo conferma al riepilogo. Il nuovo percorso è verificato offline; il riascolto reale resta da fare. Database condiviso, pannello e autenticazione per hosting restano futuri. Vedi [prenotazioni locali](docs/PRENOTAZIONI_LOCALI.md).
+**Stato al 18 novembre 2026:** app locale con Realtime e prenotazioni su disco. Dopo una prova reale senza salvataggio sono stati corretti ordine degli eventi della conferma, assensi naturali e numeri pronunciati. Preparati modello completo, ASR più accurato e log tecnici privi di trascrizioni. Test offline disponibili; nuova qualità vocale ancora da ascoltare. Chiamate in pausa per evitare consumi durante le correzioni. Vedi [voce e diagnostica](docs/VOCE_REALTIME.md) e [prenotazioni locali](docs/PRENOTAZIONI_LOCALI.md).
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 

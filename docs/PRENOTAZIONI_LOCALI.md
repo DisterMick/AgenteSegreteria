@@ -6,8 +6,8 @@ Scelta dell'utilizzatore: archivio persistente sul computer, senza nuovi servizi
 
 1. Il cliente parla per primo. Con data, ora e coperti già chiari, l'agente verifica subito i tavoli.
 2. Se disponibile, chiede il nome e prepara il riepilogo completo. Non richiede recapiti.
-3. Il controller verifica che la trascrizione della domanda coincida con il riepilogo generato e che il provider segnali il termine della riproduzione audio. Un'interruzione non abilita la conferma.
-4. Solo un nuovo turno audio con un assenso breve e inequivocabile («Sì», «Sì, confermo», «Va bene») può confermare la revisione corrente entro due minuti. «Sì, ma alle 19», rifiuti, silenzio e trascrizioni fuori ordine non salvano. Altre formulazioni richiedono un nuovo riepilogo.
+3. Il controller verifica la domanda contro varianti equivalenti con numeri in cifre o in lettere e attende la fine audio. Accetta il riscontro del canale server o del browser proprietario solo per il riepilogo noto; un'interruzione resta bloccante. La conferma preparata sopravvive al diverso ordine di arrivo degli eventi.
+4. Solo un nuovo turno audio con assenso inequivocabile («Sì», «Sì, esatto», «Sì, ti confermo», «Confermo la prenotazione») può confermare la revisione corrente entro due minuti. «Sì, ma alle 19» richiede correzione e nuovo controllo; rifiuti, silenzio e trascrizioni fuori ordine non salvano. Dopo due tentativi falliti lo stesso riepilogo è bloccato, senza richieste infinite di conferma.
 5. Il server ricontrolla capienza e orario e salva. L'agente può annunciare successo solo dopo `RESERVATION_SAVED`, comunicando il campo `code`. La pagina mostra lo stesso esito durante la chiamata.
 
 La trascrizione ASR è fallibile: questi controlli riducono conferme improprie, non provano con certezza l'intenzione. Audio e trascrizioni restano transitori; non sono registrati dall'app.
@@ -24,4 +24,4 @@ Limiti: un disco locale e un server, nessun pannello elenco, cancellazione, aute
 
 ## Verifica del 18 novembre 2026
 
-Test offline: percorso voce/strumenti/conferma/file, mancata conferma, riepilogo interrotto o diverso, correzioni, scadenza, replay, ASR fuori ordine, duplicati, ultimo tavolo, guasti e riservatezza degli output. Nessun credito API consumato per questa modifica. Il nuovo flusso non è ancora provato con audio reale.
+La prova reale ha evidenziato un ciclo di conferma senza alcun file salvato. Corrette e riprodotte offline: perdita della conferma quando l'inizio del sì precede la fine audio, equivalenza dei numeri pronunciati e assensi naturali. Coperti anche rifiuti, correzioni, scadenza, replay, ACK estranei/tardivi, ASR fuori ordine, duplicati, ultimo tavolo, guasti e privacy dei log. Nessun credito API consumato per queste correzioni. Il nuovo modello e il flusso corretto richiedono ancora la prova audio reale.

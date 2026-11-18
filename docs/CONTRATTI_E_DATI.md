@@ -44,6 +44,7 @@ Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → 
 - Il controller genera `confirmation_id` solo dopo riepilogo e conferma esplicita riferita alla revisione corrente. Un parametro `confirmed: true` inviato dal modello non è prova sufficiente.
 - La conferma è associata a sessione, bozza, revisione e dettagli; scade dopo due minuti o alla prima modifica. Il client non sceglie il contenuto di un'autorizzazione server.
 - La decisione che un «sì» confermi la bozza deve essere verificata contro il turno effettivo dell'utente e il riepilogo emesso; audio o trascrizione ambigui richiedono una nuova domanda. Nessuna pretesa di prova certa dell'intenzione attraverso il solo modello.
+- Nel laboratorio il browser può inoltrare `playback_finished` con il solo ID di risposta; il server lo correla al proprio riepilogo completato e validato. Il riscontro non sostituisce il nuovo assenso ASR e non seleziona dettagli o permessi. Cancellazione audio, revisione e scadenza prevalgono; dopo due fallimenti non si ripete lo stesso riepilogo.
 - Dopo due tentativi di chiarimento senza esito, proporre handoff. Nella demo significa richiesta visibile nel pannello, non una telefonata trasferita.
 
 ## Persistenza minima

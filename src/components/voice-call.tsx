@@ -101,7 +101,7 @@ export function VoiceCall() {
         <button type="button" disabled={!status?.ready || active} onClick={() => { void start(); }}>{phase === "connecting" ? "Connessione in corso…" : "Avvia chiamata"}</button>
         <button type="button" className="secondary-button" disabled={!active || phase === "stopping"} onClick={() => { void stop(); }}>Termina e spegni microfono</button>
       </div>
-      <p className="voice-message" role="status" aria-live="polite">{notice || (phase === "active" ? `Chiamata attiva${status?.session ? ` · ${remaining} secondi disponibili.` : "."}` : status?.message || "Verifica configurazione e budget…")}</p>
+      <p className="voice-message" role="status" aria-live="polite">{status?.paused ? status.message : notice || (phase === "active" ? `Chiamata attiva${status?.session ? ` · ${remaining} secondi disponibili.` : "."}` : status?.message || "Verifica configurazione e budget…")}</p>
       <audio ref={audio} controls autoPlay aria-label="Voce dell’assistente AI" />
       {caption && <p className="voice-caption"><strong>L’assistente:</strong> {caption}</p>}
       {status?.session?.reservation ? <p className="result-success" role="status">Prenotazione salvata: {status.session.reservation.date}, ore {status.session.reservation.time}, {status.session.reservation.party_size} persone, a nome {status.session.reservation.name}. Codice: {status.session.reservation.code}.</p>

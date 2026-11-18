@@ -47,17 +47,17 @@ describe("plafond vocale persistente", () => {
 
 describe("configurazione e stima costi", () => {
   it("considera separatamente audio e testo senza promettere sconti cache", () => {
-    expect(estimateUsageUsd({ input_tokens: 2000, output_tokens: 1000, input_token_details: { audio_tokens: 1000 }, output_token_details: { audio_tokens: 500 } })).toBeCloseTo(0.0218);
+    expect(estimateUsageUsd({ input_tokens: 2000, output_tokens: 1000, input_token_details: { audio_tokens: 1000 }, output_token_details: { audio_tokens: 500 } })).toBeCloseTo(0.08);
   });
   it("usa una stima prudente quando mancano i dettagli e rifiuta conteggi impossibili", () => {
-    expect(estimateUsageUsd({ input_tokens: 1000, output_tokens: 1000 })).toBeCloseTo(0.03);
+    expect(estimateUsageUsd({ input_tokens: 1000, output_tokens: 1000 })).toBeCloseTo(0.096);
     expect(() => estimateUsageUsd({ input_tokens: -1, output_tokens: 10 })).toThrow();
     expect(() => estimateUsageUsd({ input_tokens: 1, output_tokens: 0, input_token_details: { audio_tokens: 2 } })).toThrow();
   });
   it("consente frasi complete e controlla dal server i turni e la trascrizione", () => {
     const config = realtimeConfig(now);
-    expect(config).toMatchObject({ model: "gpt-realtime-2.1-mini", max_output_tokens: 1024 });
-    expect(config.audio.input).toMatchObject({ transcription: { model: "gpt-4o-mini-transcribe", language: "it" }, turn_detection: { type: "semantic_vad", create_response: false, interrupt_response: true } });
+    expect(config).toMatchObject({ model: "gpt-realtime-2.1", max_output_tokens: 1024 });
+    expect(config.audio.input).toMatchObject({ transcription: { model: "gpt-4o-transcribe", language: "it" }, noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "low", create_response: false, interrupt_response: true } });
     expect(JSON.stringify(config.tools)).not.toContain("create_reservation");
   });
   it("include i token della trascrizione nella stima prudente e rifiuta uso ignoto", () => {
