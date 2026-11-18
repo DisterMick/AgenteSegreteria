@@ -7,5 +7,5 @@ export const voicePolicy = {
   totalCents: 900,
   stopAtUsd: 0.40,
   maxResponses: 24,
-  maxOutputTokens: 256,
+  maxOutputTokens: 1024,
 } as const;

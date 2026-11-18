@@ -29,7 +29,6 @@ export class BrowserVoice {
         if (["failed", "disconnected", "closed"].includes(peer.connectionState) && generation === this.generation) disconnected();
       };
       const channel = peer.createDataChannel("oai-events"); this.channel = channel;
-      channel.onopen = () => channel.send(JSON.stringify({ type: "response.create" }));
       channel.onclose = () => { if (generation === this.generation) disconnected(); };
       channel.onmessage = (event) => {
         try {

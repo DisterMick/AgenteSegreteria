@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { VoiceBudget } from "./budget";
-import { estimateUsageUsd, realtimeConfig } from "./config";
+import { estimateTranscriptionUsd, estimateUsageUsd, realtimeConfig } from "./config";
 
 let directory: string;
 let budget: VoiceBudget;
@@ -54,10 +54,15 @@ describe("configurazione e stima costi", () => {
     expect(() => estimateUsageUsd({ input_tokens: -1, output_tokens: 10 })).toThrow();
     expect(() => estimateUsageUsd({ input_tokens: 1, output_tokens: 0, input_token_details: { audio_tokens: 2 } })).toThrow();
   });
-  it("fissa modello e limite output sul server e non abilita trascrizione a pagamento separata", () => {
+  it("consente frasi complete e controlla dal server i turni e la trascrizione", () => {
     const config = realtimeConfig(now);
-    expect(config).toMatchObject({ model: "gpt-realtime-2.1-mini", max_output_tokens: 256 });
-    expect(config.audio.input).not.toHaveProperty("transcription");
+    expect(config).toMatchObject({ model: "gpt-realtime-2.1-mini", max_output_tokens: 1024 });
+    expect(config.audio.input).toMatchObject({ transcription: { model: "gpt-4o-mini-transcribe", language: "it" }, turn_detection: { type: "semantic_vad", create_response: false, interrupt_response: true } });
     expect(JSON.stringify(config.tools)).not.toContain("create_reservation");
+  });
+  it("include i token della trascrizione nella stima prudente e rifiuta uso ignoto", () => {
+    expect(estimateTranscriptionUsd({ type: "tokens", input_tokens: 1000, output_tokens: 100 })).toBeCloseTo(0.022);
+    expect(() => estimateTranscriptionUsd({ type: "tokens", input_tokens: -1, output_tokens: 1 })).toThrow();
+    expect(() => estimateTranscriptionUsd(undefined)).toThrow();
   });
 });

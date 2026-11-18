@@ -1,6 +1,6 @@
 # Contratti degli strumenti e dati
 
-Specifica del dominio prenotazioni: creazione persistente e handoff non sono ancora disponibili. La voce Realtime usa `restaurant_action`, un unico strumento che invia una proposta all'harness (aggiornamento bozza, disponibilità, informazioni, riepilogo o richiesta handoff). Argomenti e revisione sono verificati dal server; le scritture e l'handoff non implementato sono rifiutati. L'identità della chiamata viene dal canale server OpenAI, lo stato/stop HTTP dal cookie locale, mai da dichiarazioni del modello. Il resto del documento descrive anche i contratti futuri della fase B.
+Implementazione attuale: [prenotazioni persistenti locali](PRENOTAZIONI_LOCALI.md). `restaurant_action` invia proposte all'harness; il modello non può invocare scritture. `check_availability` accetta `details` opzionali e `prepare_confirmation` accetta `name`. Il controller salva solo dopo riepilogo riprodotto e conferma nel nuovo turno audio, legata alla revisione corrente. Sessione e input audio provengono dal canale server OpenAI; stato/stop HTTP dal cookie locale. Handoff e contratti DB/pannello indicati sotto restano futuri; il laboratorio applica lock e unicità nel file locale, usando sessione/revisione come chiave idempotente e UUID come identificativo.
 
 ## Dati del ristorante demo
 

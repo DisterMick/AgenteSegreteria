@@ -65,7 +65,7 @@ describe("agent harness: allowlist and boundaries", () => {
   it("increments revision and invalidates old checks after a correction", () => {
     const draft = completedDraft();
     const checked = act(draft, { type: "check_availability", expected_revision: 1 });
-    expect(checked).toMatchObject({ status: "ok", code: "AVAILABILITY_SIMULATED" });
+    expect(checked).toMatchObject({ status: "ok", code: "AVAILABILITY_CHECKED" });
     const changed = act(checked.state, {
       type: "update_draft", expected_revision: 1, changes: { party_size: 3 },
     });

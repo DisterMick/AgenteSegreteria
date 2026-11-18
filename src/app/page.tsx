@@ -32,9 +32,9 @@ export default function Home() {
             <section className="availability-panel" aria-labelledby="disponibilita">
               <p className="eyebrow">Prova il primo strumento</p>
               <h2 id="disponibilita">C’è posto per te?</h2>
-              <p>Controlla un turno della pizzeria. La verifica è simulata e non crea una prenotazione.</p>
+              <p>Controlla un turno della pizzeria demo. La verifica tiene conto delle prenotazioni salvate.</p>
               <AvailabilityForm today={date} shifts={restaurant.shifts} maxPartySize={restaurant.max_party_size} />
-              <p className="panel-note">Tutti i tavoli partono liberi. Nessun posto viene bloccato durante la prova.</p>
+              <p className="panel-note">Per prenotare, parla con la receptionist e conferma il riepilogo. La sola verifica non blocca posti.</p>
             </section>
 
             <section className="restaurant-panel" aria-labelledby="informazioni">

@@ -90,7 +90,7 @@ export function VoiceCall() {
   return (
     <section className="voice-panel" aria-labelledby="voce">
       <div className="section-heading"><div><p className="eyebrow">02 / Parla con la pizzeria</p><h2 id="voce">La receptionist ti ascolta.</h2></div><span className="badge">OpenAI Realtime · demo</span></div>
-      <p>Parli con un assistente AI. L’audio viene elaborato da OpenAI; l’app non salva registrazioni o trascrizioni. Usa solo dati fittizi: non vengono create prenotazioni.</p>
+      <p>Parli con un assistente AI. L’audio viene elaborato e trascritto da OpenAI; l’app non salva registrazioni o trascrizioni. Usa solo dati fittizi: dopo la tua conferma la prenotazione viene salvata sul computer, nell’archivio della pizzeria demo.</p>
       <div className="voice-budget" aria-label="Controllo della spesa">
         <div><span>Plafond impegnato</span><strong>{status ? usd(status.budget.reservedCents / 100) : "—"} / 9 USD</strong></div>
         <div><span>Oggi, ora italiana</span><strong>{status ? usd(status.budget.dailyCents / 100) : "—"} / {status ? usd(status.policy.dailyCents / 100) : "—"}</strong></div>
@@ -104,7 +104,8 @@ export function VoiceCall() {
       <p className="voice-message" role="status" aria-live="polite">{notice || (phase === "active" ? `Chiamata attiva${status?.session ? ` · ${remaining} secondi disponibili.` : "."}` : status?.message || "Verifica configurazione e budget…")}</p>
       <audio ref={audio} controls autoPlay aria-label="Voce dell’assistente AI" />
       {caption && <p className="voice-caption"><strong>L’assistente:</strong> {caption}</p>}
-      {status?.session?.draft && <p className="voice-help">Bozza simulata: {status.session.draft.date ?? "data da definire"}, {status.session.draft.time ?? "ora da definire"}, {status.session.draft.party_size ?? "?"} persone. Nessuna prenotazione salvata.</p>}
+      {status?.session?.reservation ? <p className="result-success" role="status">Prenotazione salvata: {status.session.reservation.date}, ore {status.session.reservation.time}, {status.session.reservation.party_size} persone, a nome {status.session.reservation.name}. Codice: {status.session.reservation.code}.</p>
+        : status?.session?.draft && <p className="voice-help">Da confermare: {status.session.draft.date ?? "data da definire"}, {status.session.draft.time ?? "ora da definire"}, {status.session.draft.party_size ?? "?"} persone.</p>}
     </section>
   );
 }

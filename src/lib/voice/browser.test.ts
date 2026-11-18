@@ -6,14 +6,16 @@ let audio: HTMLAudioElement;
 let network: ReturnType<typeof vi.fn<typeof fetch>>;
 let media: ReturnType<typeof vi.fn>;
 let closePeer: ReturnType<typeof vi.fn<() => void>>;
+let channel: { close: ReturnType<typeof vi.fn>; send: ReturnType<typeof vi.fn>; onopen?: () => void };
 
 beforeEach(() => {
   track = { stop: vi.fn() }; closePeer = vi.fn();
   media = vi.fn().mockResolvedValue({ getTracks: () => [track] });
+  channel = { close: vi.fn(), send: vi.fn() };
   vi.stubGlobal("navigator", { mediaDevices: { getUserMedia: media } });
   vi.stubGlobal("RTCPeerConnection", class {
     addTrack() {}
-    createDataChannel() { return { close: vi.fn(), send: vi.fn() }; }
+    createDataChannel() { return channel; }
     async createOffer() { return { type: "offer", sdp: "v=0\r\noffer" }; }
     async setLocalDescription() {}
     async setRemoteDescription() {}
@@ -25,6 +27,11 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe("risorse vocali del browser", () => {
+  it("ascolta prima di parlare, senza generare un saluto all'apertura", async () => {
+    const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn());
+    channel.onopen?.(); expect(channel.send).not.toHaveBeenCalled();
+    await voice.stop();
+  });
   it("spegne microfono, peer e audio e richiede la chiusura server", async () => {
     const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn()); await voice.stop();
     expect(track.stop).toHaveBeenCalledOnce(); expect(closePeer).toHaveBeenCalledOnce();

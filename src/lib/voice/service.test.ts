@@ -6,6 +6,7 @@ import type WebSocket from "ws";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VoiceBudget } from "./budget";
 import { RealtimeVoice } from "./service";
+import { Reservations } from "../reservations";
 
 class FakeSocket extends EventEmitter {
   sent: Record<string, unknown>[] = [];
@@ -26,7 +27,7 @@ beforeEach(() => {
   upstream = vi.fn<typeof fetch>().mockImplementation(async (url) => String(url).endsWith("/hangup")
     ? new Response(null, { status: 200 })
     : new Response("v=0\r\nanswer", { status: 201, headers: { Location: "/v1/realtime/calls/rtc_test" } }));
-  service = new RealtimeVoice(budget, upstream, () => socket as unknown as WebSocket);
+  service = new RealtimeVoice(budget, upstream, () => socket as unknown as WebSocket, new Reservations(join(directory, "bookings.json")));
 });
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllEnvs(); rmSync(directory, { recursive: true, force: true }); });
 
@@ -111,5 +112,60 @@ describe("sessione Realtime controllata dal server", () => {
     const event = done("interrupted", [{ type: "function_call", name: "restaurant_action", call_id: "call_1", arguments: "{}" }]);
     await service.handle(id, { ...event, response: { ...event.response, status: "cancelled" } });
     expect(socket.sent).toHaveLength(0); expect(budget.read().observedUsd).toBeCloseTo(0.03);
+  });
+
+  it("salva dalla voce solo dopo riepilogo riprodotto e nuovo sì, senza esporre la sessione", async () => {
+    const { id } = await start();
+    const tool = async (responseId: string, action: unknown) => service.handle(id, done(responseId, [{ type: "function_call", name: "restaurant_action", call_id: responseId, arguments: JSON.stringify({ action }) }], { input_tokens: 0, output_tokens: 0 }));
+    await tool("check", { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } });
+    await tool("name", { type: "prepare_confirmation", expected_revision: 1, name: "Cliente Test" });
+    const sent = socket.sent.at(-1) as { response: { instructions: string } };
+    expect(sent.response.instructions).toContain("Confermi la prenotazione");
+    const question = 'Confermi la prenotazione per il 18/11/2026 alle 21:00, per 2 persone, a nome Cliente Test?';
+    await service.handle(id, done("summary", [{ type: "message", content: [{ transcript: question }] }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "output_audio_buffer.stopped", response_id: "summary" });
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "yes" });
+    const transcript = { type: "conversation.item.input_audio_transcription.completed", item_id: "yes", transcript: "Sì, confermo", usage: { type: "tokens", input_tokens: 10, output_tokens: 2 } };
+    await service.handle(id, transcript); await service.handle(id, transcript);
+    expect(new Reservations(join(directory, "bookings.json")).read()).toHaveLength(1);
+    expect((await service.status(id)).session?.reservation).toMatchObject({ name: "Cliente Test", time: "21:00" });
+    expect((await service.status("other")).session).toBeNull();
+    expect(JSON.stringify(socket.sent)).toContain("RESERVATION_SAVED");
+    expect(JSON.stringify(socket.sent)).not.toContain(id);
+    expect(budget.read().observedUsd).toBeCloseTo(0.00024);
+  });
+
+  it("non conferma se il cliente interrompe il riepilogo prima del playback completo", async () => {
+    const { id } = await start();
+    for (const [index, action] of [
+      { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } },
+      { type: "prepare_confirmation", expected_revision: 1, name: "Cliente Test" },
+    ].entries()) await service.handle(id, done(String(index), [{ type: "function_call", name: "restaurant_action", call_id: String(index), arguments: JSON.stringify({ action }) }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, done("summary", [{ type: "message", content: [{ transcript: "Confermi la prenotazione per il 18/11/2026 alle 21:00, per 2 persone, a nome Cliente Test?" }] }], { input_tokens: 0, output_tokens: 0 }));
+    await service.handle(id, { type: "output_audio_buffer.stopped", response_id: "older-response" });
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "early" });
+    await service.handle(id, { type: "output_audio_buffer.cleared" });
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "early", transcript: "Sì", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
+    expect(new Reservations(join(directory, "bookings.json")).read()).toEqual([]);
+    const message = socket.sent.findLast((event) => (event.item as { role?: string } | undefined)?.role === "system") as { item: { content: { text: string }[] } };
+    expect(message.item.content[0].text).toContain('"code":"NOT_SAVED"');
+  });
+
+  it("attende la fine della risposta interrotta prima di rispondere al nuovo turno", async () => {
+    const { id } = await start();
+    await service.handle(id, { type: "response.created" });
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "turn" });
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "turn", transcript: "Che pizze avete?", usage: { type: "tokens", input_tokens: 1, output_tokens: 1 } });
+    expect(socket.sent.filter((item) => item.type === "response.create")).toHaveLength(0);
+    await service.handle(id, { type: "response.done", response: { id: "cancelled", status: "cancelled", usage: { input_tokens: 0, output_tokens: 0 }, output: [] } });
+    expect(socket.sent.filter((item) => item.type === "response.create")).toHaveLength(1);
+  });
+
+  it("include la trascrizione nel tetto di costo e chiude senza salvarne il testo", async () => {
+    const { id } = await start();
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "turn" });
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "turn", transcript: "Test", usage: { type: "tokens", input_tokens: 20_000, output_tokens: 1 } });
+    expect(budget.read().active).toBeNull();
+    expect(budget.read().observedUsd).toBeGreaterThan(0.4);
   });
 });

@@ -37,7 +37,7 @@ export function AvailabilityForm({ today, shifts, maxPartySize }: Props) {
   return (
     <form onSubmit={submit} onChange={() => setResult(null)} aria-busy={pending}>
       <fieldset disabled={pending}>
-        <legend className="sr-only">Dettagli per la verifica simulata</legend>
+        <legend className="sr-only">Dettagli per la verifica disponibilità</legend>
         <label htmlFor="date">Per quale giorno?</label>
         <input id="date" name="date" type="date" min={today} defaultValue={today} required aria-describedby="date-hint" />
         <small id="date-hint">Fino a 30 giorni da oggi. Lunedì escluso.</small>
@@ -48,8 +48,8 @@ export function AvailabilityForm({ today, shifts, maxPartySize }: Props) {
         <button type="submit">{pending ? "Verifica in corso…" : "Verifica disponibilità"}<span aria-hidden="true">↗</span></button>
       </fieldset>
       <div className="result" role="status" aria-live="polite" aria-atomic="true">
-        {result?.status === "available" && <p className="result-success"><strong>Nel simulatore c’è posto.</strong>{result.available_tables} tavoli adatti a {result.party_size} {result.party_size === 1 ? "persona" : "persone"}, il {result.date.split("-").reverse().join("/")} alle {result.time}.<small>Non è una prenotazione: nessun dato è stato salvato.</small></p>}
-        {result?.status === "invalid" && <p className="result-error">{result.message}</p>}
+        {result?.status === "available" && <p className="result-success"><strong>C’è posto nella pizzeria demo.</strong>{result.available_tables} tavoli adatti a {result.party_size} {result.party_size === 1 ? "persona" : "persone"}, il {result.date.split("-").reverse().join("/")} alle {result.time}.<small>Questa verifica non blocca il tavolo. Per prenotare, parla con la receptionist.</small></p>}
+        {result && result.status !== "available" && <p className="result-error">{result.message}</p>}
       </div>
     </form>
   );

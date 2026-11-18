@@ -1,6 +1,6 @@
 # Architettura proposta
 
-Stato: app locale con endpoint di sola lettura, harness deterministico e integrazione vocale OpenAI Realtime opzionale. Sessione e contatori sono governati dal backend. Prima prova reale di connessione, generazione audio e chiusura completata; il collaudo conversazionale completo resta aperto. Autenticazione per hosting e salvataggio prenotazioni restano da implementare. Configurazione e limiti in [VOCE_REALTIME.md](VOCE_REALTIME.md).
+Stato: app locale con disponibilità, OpenAI Realtime e [prenotazioni su disco](PRENOTAZIONI_LOCALI.md). Sessione, conferme, scritture e contatori sono governati dal backend. Il nuovo percorso è verificato offline; il collaudo vocale completo resta aperto. Autenticazione per hosting, database condiviso e pannello restano futuri. Configurazione e limiti in [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 ## Componenti e confini
 
@@ -11,6 +11,7 @@ flowchart LR
     W <-->|WebSocket server: strumenti e uso| B
     B --> C[Controller e validazione]
     C --> R[Dati ristorante approvati]
+    C --> A[(Archivio locale prenotazioni)]
     C --> D[(PostgreSQL Supabase)]
     P[Pannello personale autenticato] --> B
     C --> L[Eventi tecnici e consumi]
@@ -45,7 +46,7 @@ Il browser usa WebRTC tramite lo scambio SDP unificato; chiave permanente e conf
 
 Il controller di dominio rimane indipendente dai framework e non sposta i controlli nei prompt. Niente database vettoriale, worker LiveKit o più agenti in questa fase.
 
-La prima configurazione usa `gpt-realtime-2.1-mini` con voce `marin`, output limitato e trascrizione input separata disattivata. Il confronto futuro con una pipeline STT–LLM–TTS resta soggetto allo stesso benchmark e non implica un vincitore già misurato.
+La configurazione usa `gpt-realtime-2.1-mini` con voce `marin`, output fino a 1.024 token, VAD semantico e trascrizione input per legare la conferma al turno effettivo. Il confronto futuro con STT–LLM–TTS resta soggetto allo stesso benchmark.
 
 ## Flusso di prenotazione
 

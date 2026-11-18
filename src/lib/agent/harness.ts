@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { checkAvailability } from "../availability";
+import { availabilityRequestSchema, checkAvailability, type OccupiedTable } from "../availability";
 import { restaurant } from "../restaurant";
 
 /**
@@ -30,10 +30,12 @@ export const actionSchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("check_availability"),
     expected_revision: revisionSchema,
+    details: availabilityRequestSchema.optional(),
   }),
   z.strictObject({
     type: z.literal("prepare_confirmation"),
     expected_revision: revisionSchema,
+    name: nameSchema.optional(),
   }),
   z.strictObject({
     type: z.literal("get_restaurant_info"),
@@ -89,6 +91,7 @@ export function processAgentProposal(
   state: AgentSessionState,
   input: unknown,
   now: Date = new Date(),
+  occupied: OccupiedTable[] = [],
 ): AgentOutcome {
   const parsed = actionSchema.safeParse(input);
   if (!parsed.success) {
@@ -120,18 +123,22 @@ export function processAgentProposal(
     }
 
     case "check_availability": {
+      if (action.details) {
+        const updated = processAgentProposal(state, { type: "update_draft", expected_revision: state.revision, changes: action.details }, now, occupied);
+        return processAgentProposal(updated.state, { type: "check_availability", expected_revision: updated.state.revision }, now, occupied);
+      }
       const { date, time, party_size } = state.draft;
       if (!date || !time || !party_size) {
         return blocked(state, "MISSING_BOOKING_DETAILS");
       }
-      const result = checkAvailability({ date, time, party_size }, now);
-      if (result.status === "invalid") {
-        return blocked(state, "INVALID_AVAILABILITY");
+      const result = checkAvailability({ date, time, party_size }, now, occupied);
+      if (result.status !== "available") {
+        return { ...blocked({ ...state, availability_revision: null, awaiting_confirmation_revision: null }, result.status === "unavailable" ? "NO_AVAILABILITY" : "INVALID_AVAILABILITY"), data: { message: result.message } };
       }
 
       return {
         status: "ok",
-        code: "AVAILABILITY_SIMULATED",
+        code: "AVAILABILITY_CHECKED",
         state: {
           ...state,
           availability_revision: state.revision,
@@ -148,6 +155,12 @@ export function processAgentProposal(
     }
 
     case "prepare_confirmation": {
+      if (action.name) {
+        const updated = processAgentProposal(state, { type: "update_draft", expected_revision: state.revision, changes: { name: action.name } }, now, occupied);
+        const checked = processAgentProposal(updated.state, { type: "check_availability", expected_revision: updated.state.revision }, now, occupied);
+        if (checked.status !== "ok") return checked;
+        return processAgentProposal(checked.state, { type: "prepare_confirmation", expected_revision: checked.state.revision }, now, occupied);
+      }
       if (!state.draft.name || !state.draft.date || !state.draft.time || !state.draft.party_size) {
         return blocked(state, "MISSING_BOOKING_DETAILS");
       }

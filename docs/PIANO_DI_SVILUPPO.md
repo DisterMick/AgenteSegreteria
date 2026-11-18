@@ -36,6 +36,8 @@ La richiesta corrente adotta OpenAI Realtime come prima integrazione. Il modello
 
 ## Fase B — Prenotazioni persistenti e pannello
 
+Traguardo locale aggiunto su richiesta: archivio su disco, controllo capienza sotto lock, idempotenza e conferma vocale implementati e verificati offline. Vedi [PRENOTAZIONI_LOCALI.md](PRENOTAZIONI_LOCALI.md). La checklist seguente riguarda database condiviso e pannello; il collaudo audio reale resta aperto.
+
 - [ ] Progettare e versionare schema, migrazioni e seed per i [dati minimi](CONTRATTI_E_DATI.md).
 - [ ] Implementare salvataggio transazionale con vincolo tavolo/data/turno e una prenotazione per bozza.
 - [ ] Implementare conferme legate alla sessione, idempotenza persistita e riconciliazione dei timeout.
