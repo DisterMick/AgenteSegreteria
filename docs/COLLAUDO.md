@@ -2,6 +2,10 @@
 
 Stato: lo scheletro include 22 test automatici delle regole di disponibilità, del dataset e dell'endpoint HTTP. La suite completa E01–E20 e le prove vocali restano da implementare ed eseguire. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
 
+## Harness offline (prima dei test vocali)
+
+La suite `src/lib/agent/harness.test.ts` copre una parte dei confini applicativi: azioni non consentite, argomenti extra, revisioni obsolete, invalidazione dei controlli e impossibilità di scrivere prenotazioni. Vedi [AGENT_SECURITY_EVALS.md](AGENT_SECURITY_EVALS.md). **Non sono prove di resistenza ai prompt injection del modello** e non sostituiscono E01–E20.
+
 ## Metodo
 
 Usare il dataset fittizio di [contratti e dati](CONTRATTI_E_DATI.md), fissare l'orologio nei test automatici e ripristinare lo stato tra casi indipendenti. Nessun test usa prenotazioni o audio di clienti reali.

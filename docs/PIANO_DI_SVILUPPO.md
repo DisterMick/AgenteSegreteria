@@ -17,6 +17,10 @@ Lo scheletro include una verifica HTTP di sola lettura, prima delle sessioni voc
 
 ## Fase A — Voce nel browser e simulatore
 
+- [x] Introdurre un primo harness **offline** con allowlist delle proposte, validazioni, revisioni e test dei casi malevoli; senza modello né operazioni di scrittura.
+- [x] Documentare l'architettura vocale modulare come proposta e definire i protocolli di confronto voce/security.
+- [ ] Collegare un modello testuale a un controller **server-side** autenticato e verificare le tool call con test end-to-end; l'harness offline non rappresenta ancora questo traguardo.
+
 - [ ] Pagina con dichiarazione AI/demo, avvio/arresto accessibili, stato ed errori testuali.
 - [ ] Apertura sessione autorizzata con credenziali temporanee, limiti di durata e consumo.
 - [ ] Collegamento WebRTC, gestione microfono, interruzioni e rilascio risorse.

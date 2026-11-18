@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** documentazione iniziale e scheletro locale Next.js/TypeScript. La pagina mostra i dati fittizi della pizzeria e verifica le disponibilità simulate sul server. Voce, salvataggio prenotazioni, autenticazione e database non sono ancora implementati.
+**Stato al 18 novembre 2026:** scheletro locale Next.js/TypeScript con disponibilità simulata e primo harness testuale deterministico (solo codice e test, nessuna interfaccia di chat). Voce, LLM, salvataggio prenotazioni, autenticazione e database non sono ancora implementati.
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 
@@ -66,6 +66,7 @@ npm start
 | `src/data/restaurant.json` | Dati fittizi versionati del locale |
 | `src/lib/restaurant.ts` | Validazione del dataset e orologio del ristorante |
 | `src/lib/availability.ts` | Regole condivise di disponibilità simulata |
+| `src/lib/agent/harness.ts` | Controller puro: allowlist, bozza, revisioni e blocco delle scritture |
 | `*.test.ts` | Prove deterministiche delle regole e del confine HTTP |
 
 `POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `status: "available"`, dettagli, conteggio tavoli idonei e `simulated: true`, oppure HTTP 400 con `status: "invalid"` e un messaggio. Non è ancora lo strumento vocale `check_availability`: sessioni e revisioni verranno aggiunte con il controller della fase A.
@@ -74,9 +75,15 @@ npm start
 
 Implementati: Next.js, React e TypeScript per interfaccia e backend, Zod per validare dati e input, Vitest per i test. Setup basato sulla [guida ufficiale Next.js](https://nextjs.org/docs/app/getting-started/installation), senza font remoti o servizi esterni richiesti in avvio.
 
-Previsti: OpenAI Realtime via WebRTC per la voce, Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser. L'Agents SDK è un candidato da valutare, non una dipendenza adottata.
+Previsti: pipeline STT–LLM–TTS modulare con LiveKit Agents (da validare), Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser. OpenAI Realtime resta un'alternativa da misurare; nessuna dipendenza vocale è stata installata.
 
 Il modello e le tariffe vanno verificati sull'account e sulla documentazione ufficiale prima delle prove a pagamento. Il budget di laboratorio proposto nel brief è di **9 USD**, non un credito verificato né una stima sufficiente per un servizio operativo.
+
+## Laboratorio offline dell'agente
+
+Il controller in `src/lib/agent/harness.ts` accetta solo proposte strutturate (`update_draft`, `check_availability`, `prepare_confirmation`, `get_restaurant_info`, `request_human_handoff`) e ne verifica schema e revisione. I risultati sono simulati o informativi: **non crea prenotazioni e non conferma operazioni persistenti**. I test documentano casi malevoli senza usare crediti API.
+
+Nuovi documenti: [decisione sulla pipeline vocale](docs/ADR-001-VOICE-PIPELINE.md), [protocollo benchmark voce](docs/VOICE_BENCHMARK.md) e [security evals](docs/AGENT_SECURITY_EVALS.md). La CI esegue lint, typecheck, test e build sulle PR.
 
 ## Da dove iniziare
 
