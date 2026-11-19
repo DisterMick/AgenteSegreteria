@@ -17,6 +17,8 @@ it("salva una sola prenotazione dopo retry e riavvio, sul tavolo più piccolo", 
   expect(first.table_id).toBe("T1");
   const restarted = new Reservations(store.path);
   expect(restarted.save("session", 1, details, now)).toEqual(first);
+  expect(restarted.save("session", 5, details, now)).toEqual(first);
+  expect(() => restarted.save("session", 6, { ...details, time: "19:00" }, now)).toThrow("IDEMPOTENCY_CONFLICT");
   expect(restarted.read()).toHaveLength(1);
   expect(() => restarted.save("session", 1, { ...details, name: "Altro" }, now)).toThrow("IDEMPOTENCY_CONFLICT");
 });

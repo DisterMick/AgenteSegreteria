@@ -1,3 +1,7 @@
+export const realtimeModels = ["gpt-realtime-2.1", "gpt-realtime-2.1-mini"] as const;
+export const realtimeVoices = ["marin", "cedar"] as const;
+export type VoiceSelection = { model: typeof realtimeModels[number]; voice: typeof realtimeVoices[number] };
+
 export const voicePolicy = {
   model: "gpt-realtime-2.1",
   voice: "marin",

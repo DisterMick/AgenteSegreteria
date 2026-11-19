@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** app locale con Realtime e prenotazioni su disco. Dopo una prova reale senza salvataggio sono stati corretti ordine degli eventi della conferma, assensi naturali e numeri pronunciati. Preparati modello completo, ASR più accurato e log tecnici privi di trascrizioni. Test offline disponibili; nuova qualità vocale ancora da ascoltare. Chiamate in pausa per evitare consumi durante le correzioni. Vedi [voce e diagnostica](docs/VOCE_REALTIME.md) e [prenotazioni locali](docs/PRENOTAZIONI_LOCALI.md).
+**Stato al 19 novembre 2026.** La pizzeria salva sul computer dopo una conferma esplicita. Il browser mostra la trascrizione del cliente e la ricevuta. Modello e timbro si scelgono prima della chiamata. Le prove locali verificano anche rifiuti, correzioni e turni pieni. Le chiamate a pagamento sono in pausa in attesa della prova di ascolto. [Voce e diagnostica](docs/VOCE_REALTIME.md).
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 
@@ -46,12 +46,13 @@ npm run dev
 
 Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). La verifica testuale e i test non richiedono credenziali e non generano consumi API. Per parlare con l'agente crea `.env.local` con `OPENAI_API_KEY` e `OPENAI_REALTIME_ENABLED=true`, poi riavvia il server: vedi [configurazione voce](docs/VOCE_REALTIME.md). Non incollare la chiave in chat né in variabili pubbliche.
 
-La chiamata impegna 0,50 USD del plafond locale: massimo 1,50 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
+La chiamata impegna 0,50 USD del plafond locale: massimo 2,00 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
 
-La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Tutti i tavoli del simulatore partono liberi: nessuna richiesta blocca posti o salva prenotazioni.
+La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Il calcolo legge le prenotazioni salvate e, quando possibile, indica altri turni disponibili nella stessa data.
 
 ```sh
 npm test
+npm run eval:booking
 npm run lint
 npm run typecheck
 npm run build
@@ -66,9 +67,9 @@ npm start
 | --- | --- |
 | `src/app/` | Pagina, layout, stili e API HTTP |
 | `src/components/availability-form.tsx` | Modulo con attesa, esito ed errori |
-| `src/data/restaurant.json` | Dati fittizi versionati del locale |
+| `config/tenants/pizzeria-demo/restaurant.json` | Dati fittizi versionati del locale |
 | `src/lib/restaurant.ts` | Validazione del dataset e orologio del ristorante |
-| `src/lib/availability.ts` | Regole condivise e conteggio dei tavoli liberi |
+| `src/domain/booking/availability.ts` | Regole di disponibilità a turni fissi e scelta dei tavoli idonei |
 | `src/lib/reservations.ts` | Archivio locale con lock, controllo capienza e idempotenza |
 | `src/lib/agent/booking.ts` | Riepilogo, conferma vocale e salvataggio controllato |
 | `src/lib/agent/harness.ts` | Controller puro: allowlist, bozza, revisioni e blocco delle scritture |

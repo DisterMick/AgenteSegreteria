@@ -12,7 +12,8 @@
     "start": "next start --hostname 127.0.0.1",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:booking": "vitest run evals/prenotazione.test.ts"
   },
   "dependencies": {
     "next": "16.4.6",

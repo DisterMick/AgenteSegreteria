@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { checkAvailability } from "./availability";
 import { restaurant } from "./restaurant";
+import { evaluateAvailability } from "@/domain/booking/availability";
+import { restaurantSchema } from "./restaurant";
 
 const now = new Date("2026-11-18T17:00:00Z");
 const request = { date: "2026-11-19", time: "19:00", party_size: 2 };
@@ -16,6 +18,22 @@ describe("disponibilità demo", () => {
 
   it("non assegna tavoli da due a gruppi da quattro", () => {
     expect(checkAvailability({ ...request, party_size: 4 }, now)).toMatchObject({ available_tables: 2 });
+  });
+  it("propone solo turni dello stesso giorno con un tavolo realmente libero", () => {
+    const full = ["T3", "T4"].map(table_id => ({ table_id, date: request.date, time: "19:00" }));
+    expect(checkAvailability({ ...request, party_size: 4 }, now, full)).toMatchObject({ code: "NO_AVAILABILITY", alternatives: ["21:00"] });
+    const both = [...full, ...full.map(r => ({ ...r, time: "21:00" }))];
+    expect(checkAvailability({ ...request, time: "20:00", party_size: 4 }, now, both)).toMatchObject({ code: "INVALID_SHIFT", alternatives: [] });
+  });
+  it("applica turni, ferie e capienza di un secondo ristorante dalla configurazione", () => {
+    const second = restaurantSchema.parse({ ...restaurant, name: "Osteria Test", max_party_size: 6, booking_horizon_days: 10,
+      hours: { opens: "12:00", closes: "15:00" }, shifts: [{ start: "12:30", end: "14:30" }], tables: [{ id: "A", seats: 6 }], closed_dates: ["2026-11-20"] });
+    const clock = { date: "2026-11-18", time: "11:45" };
+    const slot = { ...request, time: "12:30", party_size: 6 };
+    expect(evaluateAvailability(slot, second, clock, [])).toMatchObject({ status: "available", available_tables: 1 });
+    expect(evaluateAvailability({ ...slot, date: "2026-11-20" }, second, clock, [])).toMatchObject({ code: "CLOSED_DAY" });
+    expect(evaluateAvailability({ ...slot, party_size: 7 }, second, clock, [])).toMatchObject({ code: "PARTY_SIZE_OUT_OF_RANGE", params: { min: 1, max: 6 } });
+    expect(restaurantSchema.safeParse({ ...second, shifts: [...second.shifts, ...second.shifts] }).success).toBe(false);
   });
 
   it.each([

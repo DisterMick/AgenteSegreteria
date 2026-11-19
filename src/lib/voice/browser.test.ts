@@ -32,6 +32,15 @@ describe("risorse vocali del browser", () => {
     channel.onopen?.(); expect(channel.send).not.toHaveBeenCalled();
     await voice.stop();
   });
+  it("invia le preferenze solo all’avvio e mostra la trascrizione del cliente solo in pagina", async () => {
+    const voice = new BrowserVoice(), heard = vi.fn(), caption = vi.fn();
+    await voice.start(audio, caption, vi.fn(), { model: "gpt-realtime-2.1-mini", voice: "cedar" }, heard);
+    expect(network.mock.calls[0][1]?.headers).toMatchObject({ "X-Realtime-Model": "gpt-realtime-2.1-mini", "X-Realtime-Voice": "cedar" });
+    channel.onmessage?.({ data: JSON.stringify({ type: "conversation.item.input_audio_transcription.completed", transcript: "Cliente Test" }) });
+    expect(heard).toHaveBeenCalledWith("Cliente Test"); expect(caption).not.toHaveBeenCalled();
+    expect(network).toHaveBeenCalledTimes(1);
+    await voice.stop();
+  });
   it("inoltra soltanto ID e fine riproduzione, senza trascrizioni o permessi di salvataggio", async () => {
     const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn());
     channel.onmessage?.({ data: JSON.stringify({ type: "output_audio_buffer.stopped", response_id: "resp_summary", transcript: "Dato Privato" }) });

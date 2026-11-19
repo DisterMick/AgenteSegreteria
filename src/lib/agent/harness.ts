@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { availabilityRequestSchema, checkAvailability, type OccupiedTable } from "../availability";
+import { bookingRequestSchema } from "@/domain/booking/availability";
+import { checkAvailability, type OccupiedTable } from "../availability";
 import { restaurant } from "../restaurant";
 
 /**
@@ -30,7 +31,7 @@ export const actionSchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("check_availability"),
     expected_revision: revisionSchema,
-    details: availabilityRequestSchema.optional(),
+    details: bookingRequestSchema.optional(),
   }),
   z.strictObject({
     type: z.literal("prepare_confirmation"),
@@ -91,7 +92,7 @@ export function processAgentProposal(
   state: AgentSessionState,
   input: unknown,
   now: Date = new Date(),
-  occupied: OccupiedTable[] = [],
+  occupied: OccupiedTable[] | (() => OccupiedTable[]) = [],
 ): AgentOutcome {
   const parsed = actionSchema.safeParse(input);
   if (!parsed.success) {
@@ -124,6 +125,9 @@ export function processAgentProposal(
 
     case "check_availability": {
       if (action.details) {
+        if (!partySizeSchema.safeParse(action.details.party_size).success) {
+          return { ...blocked(state, "INVALID_AVAILABILITY"), data: { reason: "PARTY_SIZE_OUT_OF_RANGE", min: 1, max: restaurant.max_party_size } };
+        }
         const updated = processAgentProposal(state, { type: "update_draft", expected_revision: state.revision, changes: action.details }, now, occupied);
         return processAgentProposal(updated.state, { type: "check_availability", expected_revision: updated.state.revision }, now, occupied);
       }
@@ -131,9 +135,10 @@ export function processAgentProposal(
       if (!date || !time || !party_size) {
         return blocked(state, "MISSING_BOOKING_DETAILS");
       }
-      const result = checkAvailability({ date, time, party_size }, now, occupied);
+      const result = checkAvailability({ date, time, party_size }, now, typeof occupied === "function" ? occupied() : occupied);
       if (result.status !== "available") {
-        return { ...blocked({ ...state, availability_revision: null, awaiting_confirmation_revision: null }, result.status === "unavailable" ? "NO_AVAILABILITY" : "INVALID_AVAILABILITY"), data: { message: result.message } };
+        return { ...blocked({ ...state, availability_revision: null, awaiting_confirmation_revision: null }, result.status === "unavailable" ? "NO_AVAILABILITY" : "INVALID_AVAILABILITY"),
+          data: { reason: result.code, params: result.params, alternatives: result.alternatives, message: result.message } };
       }
 
       return {
@@ -177,7 +182,7 @@ export function processAgentProposal(
 
     case "get_restaurant_info": {
       const info = {
-        hours: { opening_days: restaurant.opening_days, hours: restaurant.hours, shifts: restaurant.shifts },
+        hours: { opening_days: restaurant.opening_days, closed_dates: restaurant.closed_dates, hours: restaurant.hours, shifts: restaurant.shifts },
         menu: restaurant.menu,
         allergens: { menu: restaurant.menu.map((item) => ({ name: item.name, allergens: item.allergens })), notice: restaurant.allergen_notice },
         services: restaurant.services,

@@ -2,13 +2,15 @@ import { randomUUID } from "node:crypto";
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
+import { bookingRequestSchema, fittingTables } from "@/domain/booking/availability";
 import { availabilityRequestSchema, checkAvailability } from "./availability";
 import { restaurant } from "./restaurant";
 
 const detailsSchema = availabilityRequestSchema.extend({ name: z.string().trim().min(1).max(80) });
-const reservationSchema = detailsSchema.extend({
+const reservationSchema = bookingRequestSchema.extend({
+  name: z.string().trim().min(1).max(80), party_size: z.number().int().positive(),
   id: z.uuid(), session_id: z.string().min(1), revision: z.number().int().nonnegative(),
-  table_id: z.enum(restaurant.tables.map((table) => table.id)), created_at: z.iso.datetime(),
+  table_id: z.string().min(1), created_at: z.iso.datetime(),
 });
 export type Reservation = z.infer<typeof reservationSchema>;
 
@@ -27,7 +29,8 @@ export class Reservations {
     const lock = openSync(`${this.path}.lock`, "wx", 0o600);
     try {
       const rows = this.read();
-      const previous = rows.find((row) => row.session_id === sessionId && row.revision === revision);
+      const previous = rows.find((row) => row.session_id === sessionId && row.revision === revision)
+        ?? rows.find((row) => row.session_id === sessionId);
       if (previous) {
         if (Object.entries(details).some(([key, value]) => previous[key as keyof Reservation] !== value)) throw new Error("IDEMPOTENCY_CONFLICT");
         return previous;
@@ -36,8 +39,7 @@ export class Reservations {
       void _name;
       const available = checkAvailability(request, now, rows);
       if (available.status !== "available") throw new Error(available.status === "unavailable" ? "NO_AVAILABILITY" : "INVALID_AVAILABILITY");
-      const table = [...restaurant.tables].sort((a, b) => a.seats - b.seats || a.id.localeCompare(b.id))
-        .find((table) => table.seats >= details.party_size && !rows.some((row) => row.date === details.date && row.time === details.time && row.table_id === table.id))!;
+      const [table] = fittingTables(request, restaurant, rows);
       const row = reservationSchema.parse({ ...details, id: randomUUID(), session_id: sessionId, revision, table_id: table.id, created_at: now.toISOString() });
       writeFileSync(`${this.path}.tmp`, JSON.stringify([...rows, row], null, 2), { mode: 0o600 });
       renameSync(`${this.path}.tmp`, this.path);

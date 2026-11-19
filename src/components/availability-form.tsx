@@ -7,11 +7,12 @@ type Props = {
   today: string;
   shifts: { start: string; end: string }[];
   maxPartySize: number;
+  horizonDays: number;
 };
 
-export function AvailabilityForm({ today, shifts, maxPartySize }: Props) {
+export function AvailabilityForm({ today, shifts, maxPartySize, horizonDays }: Props) {
   const [pending, setPending] = useState(false);
-  const [result, setResult] = useState<AvailabilityResult | null>(null);
+  const [result, setResult] = useState<AvailabilityResult | { status: "invalid"; message: string } | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,7 +41,7 @@ export function AvailabilityForm({ today, shifts, maxPartySize }: Props) {
         <legend className="sr-only">Dettagli per la verifica disponibilità</legend>
         <label htmlFor="date">Per quale giorno?</label>
         <input id="date" name="date" type="date" min={today} defaultValue={today} required aria-describedby="date-hint" />
-        <small id="date-hint">Fino a 30 giorni da oggi. Lunedì escluso.</small>
+        <small id="date-hint">Fino a {horizonDays} giorni da oggi, nei giorni di apertura.</small>
         <div className="form-row">
           <div><label htmlFor="time">A che ora?</label><select id="time" name="time">{shifts.map((shift) => <option key={shift.start} value={shift.start}>{shift.start}</option>)}</select></div>
           <div><label htmlFor="party_size">Quante persone?</label><select id="party_size" name="party_size" defaultValue="2">{Array.from({ length: maxPartySize }, (_, index) => <option key={index + 1} value={index + 1}>{index + 1} {index === 0 ? "persona" : "persone"}</option>)}</select></div>

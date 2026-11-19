@@ -46,7 +46,7 @@ Il browser usa WebRTC tramite lo scambio SDP unificato; chiave permanente e conf
 
 Il controller di dominio rimane indipendente dai framework e non sposta i controlli nei prompt. Niente database vettoriale, worker LiveKit o più agenti in questa fase.
 
-La configurazione preparata usa `gpt-realtime-2.1` completo, voce `marin` a velocità 0,95, output fino a 1.024 token, VAD semantico `low` e ASR `gpt-4o-transcribe`. Riscontri audio server/browser sono correlati al riepilogo verificato; il turno ASR autorizza il salvataggio. Il nuovo assetto resta da provare dal vivo; è attiva la pausa locale delle chiamate. Il confronto STT–LLM–TTS resta futuro.
+La disponibilità a turni fissi è una funzione pura in `src/domain/booking/availability.ts`. Riceve configurazione, orologio e occupazione dall’applicazione. Agente e verifica pubblica usano le stesse regole. Il server associa ogni riepilogo alla singola risposta Realtime tramite metadati e alla revisione della bozza. Il browser proprietario può rileggere la ricevuta dal disco dopo la chiusura.
 
 ## Flusso di prenotazione
 

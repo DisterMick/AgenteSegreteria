@@ -9,6 +9,7 @@ Decisione proposta: confrontare prima OpenAI completo con due voci, ElevenLabs R
 | Candidato | Che cosa confrontiamo | Conseguenza per questa app |
 | --- | --- | --- |
 | OpenAI `gpt-realtime-2.1`, `marin` e `cedar` | Stesso agente e stesse regole; isolare la preferenza per il timbro | Integrazione esistente; cambiare voce richiede una nuova sessione. `cedar` non è un diverso modello di comprensione |
+| OpenAI `gpt-realtime-2.1-mini` | Confronto economico sullo stesso flusso di conferma | Selezionabile dal browser con Marin o Cedar prima della chiamata |
 | ElevenLabs Realtime v1 Max | Conversazione completa: ascolto, turni, ragionamento, strumenti e voce | Prima alternativa per la pizzeria; API compatibile con il protocollo OpenAI via WebSocket, ma il nostro trasporto WebRTC e i controlli server richiedono adattamento |
 | Google `gemini-3.8-live` | Seconda alternativa audio-audio con function calling e italiano | Adapter Live API, credenziali Google e gestione di eventi, conferma e costi da verificare prima dell'uso |
 | Cartesia `sonic-3.6-2026-08-27` | Sintesi del medesimo testo italiano con una voce adatta al locale | Solo TTS: richiede STT e modello conversazionale separati; da solo non migliora la comprensione. Snapshot fissato per ripetibilità |

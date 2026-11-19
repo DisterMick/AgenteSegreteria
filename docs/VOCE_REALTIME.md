@@ -22,7 +22,7 @@ Il browser usa WebRTC per microfono e audio. `POST /api/voice` scambia la SDP co
 
 L'harness conserva bozza e revisione e rifiuta scritture del modello. `check_availability.details` aggiorna e verifica in una chiamata; `prepare_confirmation.name` aggiorna il nome, ricontrolla e prepara il riepilogo. Il controller separato salva solo dopo il turno audio di conferma. Risposte e trascrizioni sono deduplicate per ID; il browser non fornisce stato o contatori attendibili. L'handoff resta non implementato.
 
-Nessun saluto automatico: informativa AI/demo nella pagina. VAD semantico `low` lascia più tempo alle parole incomplete; riduzione rumore `near_field` per cuffie/microfono vicino, voce `marin` a velocità 0,95, date con mese in lettere, ragionamento `minimal` e strumenti sequenziali. Le risposte restano limitate a 1.024 token. La trascrizione italiana ha un contesto di prenotazione e il prompt chiede chiarimenti sui nomi incerti. Queste impostazioni richiedono una prova con il microfono effettivo; VAD più paziente e ASR separato possono aumentare l'attesa. Vedi [configurazione ufficiale](https://developers.openai.com/api/reference/resources/realtime/subresources/calls/methods/create).
+L’agente aspetta la prima frase del cliente. Il VAD semantico usa `medium`, la riduzione del rumore `near_field` e la velocità di uscita è 0,95. La pagina mostra l’ultimo turno trascritto. Se il trascrittore assegna a un token di parola una probabilità inferiore a 0,5, il log registra `TRANSCRIPTION_UNCERTAIN` e un eventuale assenso richiede una nuova conferma. È una soglia iniziale da calibrare al microfono. I token e le parole restano transitori. [Configurazione Realtime](https://developers.openai.com/api/reference/resources/realtime/subresources/calls/methods/create).
 
 `PATCH /api/voice` accetta solo `{ "type": "playback_finished", "response_id": "..." }`, massimo 1 KB, con origine locale e cookie proprietario. Il browser inoltra il termine audio dal data channel; il server lo associa al proprio riepilogo completato e validato. L'ACK non autorizza scritture: occorre sempre un nuovo assenso audio trascritto sul server, riferito alla revisione corrente. Sono gestiti anche gli ACK arrivati prima di `response.done` o dopo l'inizio/trascrizione del sì (attesa massima 2 secondi). Audio cancellato, riepilogo diverso, correzioni e scadenza restano bloccanti. Dopo due conferme fallite il controller impedisce un altro riepilogo identico.
 
@@ -32,9 +32,9 @@ La demo accetta solo host di loopback. Le richieste di creazione e chiusura rich
 
 | Controllo | Impostazione |
 | --- | --- |
-| Modello | `gpt-realtime-2.1` |
+| Modello | `gpt-realtime-2.1` predefinito oppure `gpt-realtime-2.1-mini` |
 | Trascrizione input | `gpt-4o-transcribe`, italiano |
-| Voce | `marin`, velocità 0,95 |
+| Voce | `marin` predefinita oppure `cedar`, velocità 0,95 |
 | Sessioni simultanee | Una per copia locale del progetto |
 | Durata | 180 secondi, timer server e browser |
 | Output per risposta | Massimo 1.024 token |
@@ -47,7 +47,7 @@ La demo accetta solo host di loopback. Le richieste di creazione e chiusura rich
 
 **Il plafond impegnato non è la spesa fatturata.** Ogni tentativo che raggiunge il provider impegna 0,50 USD e non viene rimborsato localmente, nemmeno se termina presto o il provider lo rifiuta. Questo permette al massimo quattro tentativi al giorno e diciotto complessivi. Il plafond giornaliero è stato portato da 1,50 a 2,00 USD su richiesta dell'utilizzatore per provare il nuovo flusso di prenotazione. Il costo stimato dai token viene mostrato separatamente, senza sconti cache per prudenza; non include altri usi dell'account o componenti non osservate.
 
-Il modello completo costa più del mini. Tariffe della [scheda ufficiale](https://developers.openai.com/api/docs/models/gpt-realtime-2.1), in USD per milione di token: testo input 4/output 24; audio input 32/output 64. Se mancano i dettagli viene applicata la tariffa audio più alta, senza sconti cache. Per compensare il maggior costo, lo stop stimato scende da 0,40 a 0,30 USD; quota per tentativo, durata e plafond restano uguali. La chiamata può quindi terminare prima.
+Il server applica le tariffe del modello scelto prima della chiamata. Per milione di token, il modello completo usa 4/24 USD per testo in ingresso/uscita e 32/64 USD per audio. Il mini usa 0,60/2,40 USD per testo e 10/20 USD per audio. Il conteggio prudenziale addebita alla tariffa audio i token senza dettaglio ed esclude gli sconti cache. Entrambi impegnano la stessa quota locale. [Prezzi OpenAI](https://developers.openai.com/api/docs/pricing).
 
 La trascrizione separata usa `gpt-4o-transcribe`; tutti i suoi token input/output sono stimati prudenzialmente a 20 USD/M, sopra le tariffe della [scheda ufficiale](https://developers.openai.com/api/docs/models/gpt-4o-transcribe). È una sovrastima, non la tariffa fatturata. Uso mancante o invalido chiude la chiamata. Il modello ASR è supportato dal contratto Realtime ma segnalato deprecated: richiederà migrazione quando il provider lo ritirerà. Il 18 novembre 2026 i GET di metadati di entrambi i modelli hanno restituito HTTP 200 con il caricamento ambiente standard di Next.js. Nessuna generazione audio o richiesta a pagamento è stata eseguita: la prova del trasporto e dell'ascolto con il nuovo modello resta aperta.
 

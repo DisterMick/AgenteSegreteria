@@ -1,4 +1,4 @@
-import { voicePolicy } from "./policy";
+import { voicePolicy, type VoiceSelection } from "./policy";
 
 export class BrowserVoice {
   private peer: RTCPeerConnection | null = null;
@@ -10,7 +10,7 @@ export class BrowserVoice {
   private offered = false;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  async start(audio: HTMLAudioElement, caption: (text: string) => void, disconnected: () => void) {
+  async start(audio: HTMLAudioElement, caption: (text: string) => void, disconnected: () => void, selection: VoiceSelection = voicePolicy, heard?: (text: string) => void) {
     if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") throw new Error("BROWSER_UNSUPPORTED");
     const generation = ++this.generation;
     const current = () => { if (generation !== this.generation) throw new DOMException("Chiamata interrotta", "AbortError"); };
@@ -31,8 +31,10 @@ export class BrowserVoice {
       const channel = peer.createDataChannel("oai-events"); this.channel = channel;
       channel.onclose = () => { if (generation === this.generation) disconnected(); };
       channel.onmessage = (event) => {
+        if (generation !== this.generation) return;
         try {
           const message = JSON.parse(event.data);
+          if (message.type === "conversation.item.input_audio_transcription.completed" && typeof message.transcript === "string") heard?.(message.transcript.slice(0, 2000));
           if (message.type === "response.output_audio_transcript.done" && typeof message.transcript === "string") caption(message.transcript.slice(0, 2000));
           if (message.type === "output_audio_buffer.stopped" && typeof message.response_id === "string") {
             void fetch("/api/voice", { method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -47,7 +49,7 @@ export class BrowserVoice {
       await peer.setLocalDescription(offer); current();
       this.offered = true;
       const response = await fetch("/api/voice", {
-        method: "POST", headers: { "Content-Type": "application/sdp" }, body: offer.sdp,
+        method: "POST", headers: { "Content-Type": "application/sdp", "X-Realtime-Model": selection.model, "X-Realtime-Voice": selection.voice }, body: offer.sdp,
         signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(30_000)]),
       });
       if (!response.ok) {

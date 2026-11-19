@@ -57,7 +57,7 @@ describe("configurazione e stima costi", () => {
   it("consente frasi complete e controlla dal server i turni e la trascrizione", () => {
     const config = realtimeConfig(now);
     expect(config).toMatchObject({ model: "gpt-realtime-2.1", max_output_tokens: 1024 });
-    expect(config.audio.input).toMatchObject({ transcription: { model: "gpt-4o-transcribe", language: "it" }, noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "low", create_response: false, interrupt_response: true } });
+    expect(config.audio.input).toMatchObject({ transcription: { model: "gpt-4o-transcribe", language: "it" }, noise_reduction: { type: "near_field" }, turn_detection: { type: "semantic_vad", eagerness: "medium", create_response: false, interrupt_response: true } });
     expect(JSON.stringify(config.tools)).not.toContain("create_reservation");
   });
   it("include i token della trascrizione nella stima prudente e rifiuta uso ignoto", () => {

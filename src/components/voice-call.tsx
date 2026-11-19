@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { BrowserVoice } from "@/lib/voice/browser";
+import { realtimeModels, realtimeVoices, voicePolicy, type VoiceSelection } from "@/lib/voice/policy";
 import type { RealtimeVoice } from "@/lib/voice/service";
 
 type VoiceStatus = Awaited<ReturnType<RealtimeVoice["status"]>>;
@@ -17,7 +18,10 @@ export function VoiceCall() {
   const [status, setStatus] = useState<VoiceStatus | null>(null);
   const [notice, setNotice] = useState("");
   const [caption, setCaption] = useState("");
+  const [heard, setHeard] = useState("");
   const [remaining, setRemaining] = useState(0);
+  const [model, setModel] = useState<VoiceSelection["model"]>(voicePolicy.model);
+  const [timbre, setTimbre] = useState<VoiceSelection["voice"]>(voicePolicy.voice);
 
   function changePhase(next: string) { phaseRef.current = next; setPhase(next); }
 
@@ -71,9 +75,9 @@ export function VoiceCall() {
   async function start() {
     if (!status?.ready || !audio.current || phaseRef.current !== "idle") return;
     const attempt = ++attemptRef.current;
-    changePhase("connecting"); setNotice(""); setCaption("");
+    changePhase("connecting"); setNotice(""); setCaption(""); setHeard("");
     try {
-      await voice.current.start(audio.current, setCaption, () => { void stop(); });
+      await voice.current.start(audio.current, setCaption, () => { void stop(); }, { model, voice: timbre }, setHeard);
       if (attempt === attemptRef.current) changePhase("active");
     } catch (error) {
       if (attempt !== attemptRef.current) return;
@@ -87,6 +91,7 @@ export function VoiceCall() {
   }
 
   const active = phase !== "idle" || Boolean(status?.session);
+  const receipt = status?.session?.reservation ?? status?.receipt;
   return (
     <section className="voice-panel" aria-labelledby="voce">
       <div className="section-heading"><div><p className="eyebrow">02 / Parla con la pizzeria</p><h2 id="voce">La receptionist ti ascolta.</h2></div><span className="badge">OpenAI Realtime · demo</span></div>
@@ -97,14 +102,24 @@ export function VoiceCall() {
         <div><span>Costo stimato dai token</span><strong>{status ? usd(status.budget.observedUsd) : "—"}</strong></div>
       </div>
       <p className="voice-help">Ogni tentativo impegna 0,50 USD del plafond, anche se termina prima. Una chiamata alla volta, massimo 3 minuti. Le stime non sono il saldo o la fattura OpenAI.</p>
+      <fieldset className="form-row" disabled={active}>
+        <legend className="sr-only">Impostazioni della prossima chiamata</legend>
+        <div><label htmlFor="voice-model">Modello</label><select id="voice-model" value={model} onChange={e => setModel(realtimeModels.find(m => m === e.target.value) ?? voicePolicy.model)}>
+          <option value={realtimeModels[0]}>GPT-Realtime 2.1</option><option value={realtimeModels[1]}>GPT-Realtime 2.1 mini · economico</option>
+        </select></div>
+        <div><label htmlFor="voice-timbre">Voce</label><select id="voice-timbre" value={timbre} onChange={e => setTimbre(realtimeVoices.find(v => v === e.target.value) ?? voicePolicy.voice)}>
+          <option value="marin">Marin</option><option value="cedar">Cedar</option>
+        </select></div>
+      </fieldset>
       <div className="voice-actions">
         <button type="button" disabled={!status?.ready || active} onClick={() => { void start(); }}>{phase === "connecting" ? "Connessione in corso…" : "Avvia chiamata"}</button>
         <button type="button" className="secondary-button" disabled={!active || phase === "stopping"} onClick={() => { void stop(); }}>Termina e spegni microfono</button>
       </div>
       <p className="voice-message" role="status" aria-live="polite">{status?.paused ? status.message : notice || (phase === "active" ? `Chiamata attiva${status?.session ? ` · ${remaining} secondi disponibili.` : "."}` : status?.message || "Verifica configurazione e budget…")}</p>
       <audio ref={audio} controls autoPlay aria-label="Voce dell’assistente AI" />
+      {heard && <p className="voice-caption"><strong>Le tue parole trascritte</strong> {heard}</p>}
       {caption && <p className="voice-caption"><strong>L’assistente:</strong> {caption}</p>}
-      {status?.session?.reservation ? <p className="result-success" role="status">Prenotazione salvata: {status.session.reservation.date}, ore {status.session.reservation.time}, {status.session.reservation.party_size} persone, a nome {status.session.reservation.name}. Codice: {status.session.reservation.code}.</p>
+      {receipt ? <p className="result-success" role="status">Prenotazione salvata per il {receipt.date.split("-").reverse().join("/")}, ore {receipt.time}, {receipt.party_size} {receipt.party_size === 1 ? "persona" : "persone"}, a nome {receipt.name}. Codice {receipt.code}.</p>
         : status?.session?.draft && <p className="voice-help">Da confermare: {status.session.draft.date ?? "data da definire"}, {status.session.draft.time ?? "ora da definire"}, {status.session.draft.party_size ?? "?"} persone.</p>}
     </section>
   );

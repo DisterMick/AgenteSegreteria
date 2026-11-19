@@ -1,4 +1,5 @@
 import { playbackSchema, realtimeVoice } from "@/lib/voice/service";
+import { selectionSchema, voicePolicy } from "@/lib/voice/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,6 +43,11 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!allowed(request)) return Response.json({ message: "Origine non autorizzata." }, { status: 403, headers });
   if (request.headers.get("Content-Type")?.split(";")[0] !== "application/sdp") return Response.json({ message: "Invia una SDP valida." }, { status: 400, headers });
+  const selection = selectionSchema.safeParse({
+    model: request.headers.get("X-Realtime-Model") ?? voicePolicy.model,
+    voice: request.headers.get("X-Realtime-Voice") ?? voicePolicy.voice,
+  });
+  if (!selection.success) return Response.json({ message: "Scegli un modello e una voce disponibili." }, { status: 400, headers });
   const reader = request.body?.getReader();
   const decoder = new TextDecoder();
   let sdp = "", size = 0;
@@ -55,7 +61,7 @@ export async function POST(request: Request) {
     }
     sdp += decoder.decode();
     if (!sdp.startsWith("v=0")) return Response.json({ message: "SDP non valida." }, { status: 400, headers });
-    const result = await realtimeVoice.start(sdp, request.signal);
+    const result = await realtimeVoice.start(sdp, request.signal, selection.data);
     return new Response(result.sdp, { status: 201, headers: {
       ...headers, "Content-Type": "application/sdp",
       "Set-Cookie": `${cookieName}=${result.id}; HttpOnly; SameSite=Strict; Path=/api/voice; Max-Age=3600`,
@@ -67,7 +73,7 @@ export async function DELETE(request: Request) {
   if (!allowed(request)) return Response.json({ message: "Origine non autorizzata." }, { status: 403, headers });
   try {
     await realtimeVoice.stop(owner(request));
-    return Response.json({ stopped: true }, { headers: { ...headers, "Set-Cookie": `${cookieName}=; HttpOnly; SameSite=Strict; Path=/api/voice; Max-Age=0` } });
+    return Response.json({ stopped: true }, { headers });
   } catch (error) { return failure(error); }
 }
 

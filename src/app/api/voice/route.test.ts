@@ -34,6 +34,18 @@ describe("confine HTTP voce locale", () => {
     expect(response.headers.get("Set-Cookie")).toMatch(/HttpOnly; SameSite=Strict/);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
+  it("valida modello e timbro prima di aprire la sessione", async () => {
+    const input = request("POST");
+    input.headers.set("X-Realtime-Model", "gpt-realtime-2.1-mini");
+    input.headers.set("X-Realtime-Voice", "cedar");
+    expect((await POST(input)).status).toBe(201);
+    expect(service.start).toHaveBeenCalledWith("v=0\r\nsdp", input.signal, { model: "gpt-realtime-2.1-mini", voice: "cedar" });
+    for (const header of ["X-Realtime-Voice", "X-Realtime-Model"]) {
+      const invalid = request("POST"); invalid.headers.set(header, "custom");
+      expect((await POST(invalid)).status).toBe(400);
+    }
+    expect(service.start).toHaveBeenCalledTimes(1);
+  });
   it("non espone errori del provider o segreti al client", async () => {
     service.start.mockRejectedValue(new Error("Authorization: secret-value"));
     const response = await POST(request("POST"));

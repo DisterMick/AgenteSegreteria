@@ -19,7 +19,9 @@ Implementazione attuale: [prenotazioni persistenti locali](PRENOTAZIONI_LOCALI.m
 
 Il menu non garantisce assenza di contaminazioni. Una richiesta di sicurezza alimentare non documentata passa al personale. Non raccogliere diagnosi o dettagli medici nelle note.
 
-Il file `src/data/restaurant.json` include versione e data di revisione ed è validato al caricamento. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
+Il file `config/tenants/pizzeria-demo/restaurant.json` include versione e data di revisione ed è validato al caricamento. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
+
+La disponibilità restituisce il motivo strutturato e, per turno pieno, passato o fuori orario, gli altri orari verificati nella stessa data. Ogni chiamata può salvare un solo tavolo. Un tentativo con gli stessi dettagli restituisce la ricevuta originale anche con un’altra revisione.
 
 ## Strumenti consentiti
 

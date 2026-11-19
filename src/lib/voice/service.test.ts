@@ -31,14 +31,20 @@ beforeEach(() => {
 });
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllEnvs(); rmSync(directory, { recursive: true, force: true }); });
 
-async function start() {
-  const started = service.start("v=0\r\noffer");
+async function start(selection?: Parameters<RealtimeVoice["start"]>[2]) {
+  const started = service.start("v=0\r\noffer", undefined, selection);
   await vi.advanceTimersByTimeAsync(0);
   socket.emit("open");
   return started;
 }
 const usage = { input_tokens: 1000, output_tokens: 1000 };
-const done = (id: string, output: unknown[] = [], tokens = usage) => ({ type: "response.done", response: { id, usage: tokens, output } });
+function requestedSummary() {
+  const event = socket.sent.findLast(item => item.type === "response.create") as { response?: { metadata?: { summary_key: string } } } | undefined;
+  return event?.response?.metadata;
+}
+const done = (id: string, output: unknown[] = [], tokens = usage) => ({
+  type: "response.done", response: { id, status: "completed", metadata: requestedSummary(), usage: tokens, output },
+});
 
 describe("sessione Realtime controllata dal server", () => {
   it("non chiama OpenAI né impegna budget se la voce è disabilitata", async () => {
@@ -133,6 +139,47 @@ describe("sessione Realtime controllata dal server", () => {
     expect(JSON.stringify(socket.sent)).toContain("RESERVATION_SAVED");
     expect(JSON.stringify(socket.sent)).not.toContain(id);
     expect(budget.read().observedUsd).toBeCloseTo(0.00024);
+    await service.stop(id);
+    expect((await service.status(id)).receipt).toMatchObject({ name: "Cliente Test", date: "2026-11-18", time: "21:00" });
+    expect((await service.status("different")).receipt).toBeNull();
+    expect((await service.status()).receipt).toBeNull();
+  });
+
+  it("usa e contabilizza il modello scelto nella singola chiamata", async () => {
+    const { id } = await start({ model: "gpt-realtime-2.1-mini", voice: "cedar" });
+    const form = upstream.mock.calls[0][1]?.body as FormData;
+    expect(JSON.parse(String(form.get("session")))).toMatchObject({ model: "gpt-realtime-2.1-mini", audio: { output: { voice: "cedar" } } });
+    await service.handle(id, done("mini"));
+    expect(budget.read()).toMatchObject({ reservedCents: 50, observedUsd: 0.03 });
+    await service.handle(id, { type: "session.updated", session: { model: "gpt-realtime-2.1", max_output_tokens: 1024 } });
+    expect(budget.read().active).toBeNull();
+  });
+
+  it.each(["corretto", "risposta estranea", "audio interrotto", "assenso incerto"])("gestisce il sì trascritto prima di response.done con %s", async scenario => {
+    const { id } = await start();
+    const output = (event: string, items: unknown[]) => done(event, items, { input_tokens: 0, output_tokens: 0 });
+    for (const [i, action] of [
+      { type: "check_availability", expected_revision: 0, details: { date: "2026-11-18", time: "21:00", party_size: 2 } },
+      { type: "prepare_confirmation", expected_revision: 1, name: "Cliente Test" },
+    ].entries()) await service.handle(id, output(String(i), [{ type: "function_call", name: "restaurant_action", call_id: String(i), arguments: JSON.stringify({ action }) }]));
+    const metadata = requestedSummary();
+    expect(metadata?.summary_key).toBeTruthy();
+    await service.handle(id, { type: "response.created", response: { id: "summary", metadata } });
+    if (scenario !== "audio interrotto") await service.acknowledgePlayback(id, { type: "playback_finished", response_id: "summary" });
+    await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "yes" });
+    await service.handle(id, { type: "conversation.item.input_audio_transcription.completed", item_id: "yes", transcript: "Sì, va benissimo!", usage: { type: "tokens", input_tokens: 2, output_tokens: 4 },
+      logprobs: [{ token: "Sì", logprob: scenario === "assenso incerto" ? -2 : -0.01 }, { token: "!", logprob: -4 }] });
+    const store = new Reservations(join(directory, "bookings.json"));
+    expect(store.read()).toHaveLength(0);
+    const final = output("summary", [{ type: "message", content: [{ transcript: "Confermi la prenotazione per il 18 novembre 2026 alle ventuno, per due persone, a nome Cliente Test?" }] }]);
+    if (scenario === "risposta estranea") final.response.metadata = { summary_key: "old" };
+    await service.handle(id, final);
+    await vi.advanceTimersByTimeAsync(2001);
+    expect(store.read()).toHaveLength(scenario === "corretto" ? 1 : 0);
+    if (scenario === "assenso incerto") {
+      const log = readFileSync(join(directory, "voice-events.jsonl"), "utf8");
+      expect(log).toContain("TRANSCRIPTION_UNCERTAIN"); expect(log).not.toContain("benissimo");
+    }
   });
 
   it("non conferma se il cliente interrompe il riepilogo prima del playback completo", async () => {

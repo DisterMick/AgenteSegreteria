@@ -41,6 +41,8 @@ Per E09 eseguire almeno 20 coppie concorrenti con reset tra le prove; contare le
 
 ## Campione conversazionale
 
+`npm run eval:booking` esegue E01, E02, E05 ed E06 con orologio fisso, risposte italiane prestabilite e un archivio temporaneo riletto dopo la conversazione. Verifica successo, rinuncia, correzione del cognome e scelta di un altro turno. Le stesse prove fanno parte di `npm test` in CI. La prova con microfono misura separatamente riconoscimento e parlato.
+
 Prima di chiudere la fase C preparare almeno 20 conversazioni valide di prenotazione con risultato atteso esplicito. Variare formulazione, coperti, nomi inventati, chiarimenti e correzioni mantenendo disponibilità nota. Eseguire separatamente i casi di rifiuto, guasto e attacco: non mescolarli al denominatore delle richieste valide.
 
 Registrare quanti casi sono testuali, vocali sintetici e vocali eseguiti da una persona. Non presentare un test testuale come prova di qualità audio. Le prove vocali a pagamento vanno mantenute entro il budget; un campione incompleto lascia aperta la fase C e viene segnalato nel rapporto.

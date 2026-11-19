@@ -38,7 +38,7 @@ export class VoiceBudget {
   reserve(id: string, now = new Date()) {
     return this.change((state) => {
       if (state.active) throw new Error("CALL_ACTIVE");
-      const day = restaurantClock(now).date;
+      const day = restaurantClock(now, "Europe/Rome").date;
       if (state.day !== day) { state.day = day; state.dailyCents = 0; }
       if (state.reservedCents + voicePolicy.reserveCents > voicePolicy.totalCents) throw new Error("TOTAL_BUDGET");
       if (state.dailyCents + voicePolicy.reserveCents > voicePolicy.dailyCents) throw new Error("DAILY_BUDGET");

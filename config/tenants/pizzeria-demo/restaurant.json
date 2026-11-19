@@ -4,6 +4,7 @@
   "reviewed_on": "2026-11-18",
   "timezone": "Europe/Rome",
   "opening_days": [2, 3, 4, 5, 6, 0],
+  "closed_dates": [],
   "hours": { "opens": "19:00", "closes": "23:00" },
   "booking_horizon_days": 30,
   "max_party_size": 4,

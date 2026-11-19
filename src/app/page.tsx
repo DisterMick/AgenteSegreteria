@@ -33,7 +33,7 @@ export default function Home() {
               <p className="eyebrow">Prova il primo strumento</p>
               <h2 id="disponibilita">C’è posto per te?</h2>
               <p>Controlla un turno della pizzeria demo. La verifica tiene conto delle prenotazioni salvate.</p>
-              <AvailabilityForm today={date} shifts={restaurant.shifts} maxPartySize={restaurant.max_party_size} />
+              <AvailabilityForm today={date} shifts={restaurant.shifts} maxPartySize={restaurant.max_party_size} horizonDays={restaurant.booking_horizon_days} />
               <p className="panel-note">Per prenotare, parla con la receptionist e conferma il riepilogo. La sola verifica non blocca posti.</p>
             </section>
 
@@ -41,7 +41,7 @@ export default function Home() {
               <p className="eyebrow">Le informazioni approvate</p>
               <h2 id="informazioni">Il locale, in breve.</h2>
               <dl className="facts">
-                <div><dt>Quando siamo aperti</dt><dd>Martedì–domenica · {restaurant.hours.opens}–{restaurant.hours.closes}<small>Lunedì chiuso · ora italiana</small></dd></div>
+                <div><dt>Quando siamo aperti</dt><dd>{restaurant.opening_days.map(day => ["dom", "lun", "mar", "mer", "gio", "ven", "sab"][day]).join(", ")} · {restaurant.hours.opens}–{restaurant.hours.closes}<small>Ora locale · {restaurant.timezone}</small></dd></div>
                 <div><dt>I turni</dt><dd>{restaurant.shifts.map((shift) => `${shift.start}–${shift.end}`).join(" / ")}</dd></div>
                 <div><dt>La sala</dt><dd>{restaurant.tables.length} tavoli · {restaurant.tables.reduce((total, table) => total + table.seats, 0)} posti<small>Massimo {restaurant.max_party_size} persone per prenotazione, tavoli non unibili.</small></dd></div>
                 <div><dt>I servizi</dt><dd>{restaurant.services.join(", ")}</dd></div>
@@ -65,7 +65,7 @@ export default function Home() {
           <VoiceCall />
         </main>
 
-        <footer><span>Agente Segreteria / Pizzeria Demo</span><span>Un locale inventato. Una base concreta.</span></footer>
+        <footer><span>Agente Segreteria / {restaurant.name}</span><span>Un locale inventato. Una base concreta.</span></footer>
       </div>
     </>
   );
