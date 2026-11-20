@@ -1,4 +1,4 @@
-import { playbackSchema, realtimeVoice } from "@/lib/voice/service";
+import { browserSignalSchema, realtimeVoice } from "@/lib/voice/service";
 import { selectionSchema, voicePolicy } from "@/lib/voice/config";
 
 export const runtime = "nodejs";
@@ -91,9 +91,10 @@ export async function PATCH(request: Request) {
       body += decoder.decode(value, { stream: true });
     }
     body += decoder.decode();
-    const parsed = playbackSchema.safeParse(JSON.parse(body));
+    const parsed = browserSignalSchema.safeParse(JSON.parse(body));
     if (!parsed.success) return Response.json({ message: "Riscontro audio non valido." }, { status: 400, headers });
-    await realtimeVoice.acknowledgePlayback(owner(request), parsed.data);
+    if (parsed.data.type === "channel_ready") realtimeVoice.channelReady(owner(request));
+    else await realtimeVoice.acknowledgePlayback(owner(request), parsed.data);
     return Response.json({ received: true }, { headers });
   } catch (error) {
     if (error instanceof SyntaxError) return Response.json({ message: "JSON non valido." }, { status: 400, headers });

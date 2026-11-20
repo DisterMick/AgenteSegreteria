@@ -36,6 +36,8 @@ L’aggiunta di una forma di assenso richiede casi con negazioni, domande, corre
 
 Il cliente simulato riceve esclusivamente il copione e le battute udibili. Gli scenari A usano un copione fisso. Il giudice semantico vede i criteri solo al termine e non può eseguire strumenti. La CI usa client locali, credenziali fittizie e verifica il rifiuto esplicito dei test paganti.
 
+Il segnale browser `channel_ready` accetta solo il tipo di evento ed è legato al cookie della sessione. Il server sceglie il saluto dal locale e ignora segnali ripetuti. I numeri di destinazione restano fuori dagli strumenti del modello.
+
 ## Regola per i merge futuri
 
 Nessuna nuova azione di scrittura entra nell'allowlist senza test di autorizzazione, conferma esplicita, retry, conflitto e stato database. Un test avversariale passato non dimostra assenza di vulnerabilità.

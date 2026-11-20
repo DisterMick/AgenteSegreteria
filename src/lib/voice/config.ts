@@ -1,13 +1,14 @@
 import { z } from "zod";
 import { actionSchema } from "../agent/harness";
-import { restaurant, restaurantClock } from "../restaurant";
+import { openingGreeting, restaurant, restaurantClock, type VoiceChannel } from "../restaurant";
 import { realtimeModels, realtimeVoices, voicePolicy, type VoiceSelection } from "./policy";
 export { voicePolicy } from "./policy";
 
 export const toolArgumentsSchema = z.strictObject({ action: actionSchema });
 export const selectionSchema = z.strictObject({ model: z.enum(realtimeModels), voice: z.enum(realtimeVoices) });
 
-export function realtimeConfig(now = new Date(), selection: VoiceSelection = voicePolicy) {
+export function realtimeConfig(now = new Date(), selection: VoiceSelection = voicePolicy, channel: VoiceChannel = "web") {
+  const opening = openingGreeting(channel) ? "Il server avvia il saluto del locale quando il canale è pronto." : "Ascolta per prima.";
   const clock = restaurantClock(now);
   const { $schema: _schema, ...parameters } = z.toJSONSchema(toolArgumentsSchema);
   void _schema;
@@ -28,7 +29,7 @@ export function realtimeConfig(now = new Date(), selection: VoiceSelection = voi
       },
       output: { voice: selection.voice, speed: 0.95 },
     },
-    instructions: `Sei alla reception di ${restaurant.name}. Ascolta per prima. Rispondi direttamente in italiano naturale, con frasi brevi e una domanda alla volta. L’informativa sulla demo è già nella pagina. Se il cliente chiede chi sei, rispondi sinceramente.
+    instructions: `Sei alla reception di ${restaurant.name}. ${opening} Rispondi direttamente in italiano naturale, con frasi brevi e una domanda alla volta. Se il cliente chiede chi sei, rispondi sinceramente.
 Oggi è ${clock.date}, ore ${clock.time} nel fuso ${restaurant.timezone}. Con “oggi alle nove di sera per due” hai già data, ora e coperti. Se un dato è ambiguo chiedi solo quello. Per un cognome poco chiaro chiedi di scandirlo.
 Usa restaurant_action con l’ultima state.revision, inizialmente 0. Appena hai data, ora e coperti invia check_availability con details. Con posti disponibili chiedi il nome se manca. Per un turno pieno proponi solo gli orari in alternatives. Dopo la scelta ricontrolla. Quando hai il nome usa prepare_confirmation con name e lascia al controller la domanda finale.
 Con DETAILS_CHANGE_REQUESTED applica la correzione, verifica i nuovi dati e rileggi il riepilogo. Solo RESERVATION_SAVED autorizza ad annunciare il salvataggio. Con RESERVATION_ALREADY_SAVED il tavolo è già prenotato. Dopo un rifiuto chiudi la prenotazione. Con VOICE_CONFIRMATION_FAILED proponi il personale.

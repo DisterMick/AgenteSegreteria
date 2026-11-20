@@ -5,7 +5,7 @@ import WebSocket from "ws";
 import { z } from "zod";
 import { BookingController, bookingReceipt } from "../agent/booking";
 import { reservations, type Reservations } from "../reservations";
-import { restaurantClock } from "../restaurant";
+import { openingGreeting, restaurantClock } from "../restaurant";
 import { VoiceBudget } from "./budget";
 import { controllerLine } from "./lines";
 import { VoiceDiagnostics, type DiagnosticEvent } from "./diagnostics";
@@ -14,6 +14,7 @@ import type { VoiceSelection } from "./policy";
 
 const baseUrl = "https://api.openai.com/v1/realtime/calls";
 export const playbackSchema = z.strictObject({ type: z.literal("playback_finished"), response_id: z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/) });
+export const browserSignalSchema = z.union([playbackSchema, z.strictObject({ type: z.literal("channel_ready") })]);
 const responseSchema = z.object({
   id: z.string(), usage: z.unknown(), status: z.string().optional(),
   metadata: z.object({ summary_key: z.string().optional() }).nullish(),
@@ -28,7 +29,7 @@ type Runtime = {
   transcripts: Set<string>; latestInput: string | null; responding: boolean; replyPending: boolean; interrupted: boolean;
   model: VoiceSelection["model"];
   summary: { key: string; proof: NonNullable<BookingController["pending"]>; id: string | null; text: string | null; completed: boolean; cleared: boolean } | null;
-  nextLine: string | null; uncertainInput: boolean;
+  openingLine: string | null; nextLine: string | null; uncertainInput: boolean;
   trace: string; turnStartedAt: number; responseStartedAt: number; acknowledgements: Map<string, number>;
   clearedResponses: Set<string>; firstAudio: boolean;
   pendingTurn: { id: string; text: string; timer: ReturnType<typeof setTimeout> } | null;
@@ -100,7 +101,7 @@ export class RealtimeVoice {
     const runtime: Runtime = {
       id, callId: null, booking: new BookingController(id, this.store), socket: null, seen: new Set(), stopReason: null,
       transcripts: new Set(), latestInput: null, responding: false, replyPending: false, interrupted: false,
-      model: selection.model, summary: null, nextLine: null, uncertainInput: false, trace, turnStartedAt: 0, responseStartedAt: 0, acknowledgements: new Map(), clearedResponses: new Set(), firstAudio: false, pendingTurn: null,
+      model: selection.model, summary: null, openingLine: openingGreeting("web"), nextLine: null, uncertainInput: false, trace, turnStartedAt: 0, responseStartedAt: 0, acknowledgements: new Map(), clearedResponses: new Set(), firstAudio: false, pendingTurn: null,
       timer: setTimeout(() => { this.log(runtime, { event: "stop", code: "DURATION_LIMIT" }); void this.stop(id).catch(() => {}); }, voicePolicy.durationSeconds * 1000),
     };
     runtime.timer.unref?.();
@@ -296,6 +297,17 @@ export class RealtimeVoice {
     runtime.nextLine = controllerLine(result.code) ?? runtime.nextLine;
     const clarification = runtime.uncertainInput && result.code === "NOT_SAVED" ? " Alcune parole sono incerte. Chiedi di ripetere solo il dettaglio che non hai capito." : "";
     runtime.socket?.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "system", content: [{ type: "input_text", text: `Esito del controller (dati): ${JSON.stringify({ code: result.code, reason: result.reason, revision: runtime.booking.state.revision })}.${clarification}` }] } }));
+    runtime.replyPending = true;
+    this.respond(runtime);
+  }
+
+  channelReady(owner: string | undefined) {
+    const runtime = this.current;
+    if (!runtime || runtime.id !== owner || runtime.stopReason) throw new Error("SESSION_NOT_FOUND");
+    const line = runtime.openingLine;
+    runtime.openingLine = null;
+    if (!line || runtime.latestInput || runtime.responding) return;
+    runtime.nextLine = line;
     runtime.replyPending = true;
     this.respond(runtime);
   }

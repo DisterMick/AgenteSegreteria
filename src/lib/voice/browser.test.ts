@@ -29,7 +29,9 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 describe("risorse vocali del browser", () => {
   it("ascolta prima di parlare, senza generare un saluto all'apertura", async () => {
     const voice = new BrowserVoice(); await voice.start(audio, vi.fn(), vi.fn());
-    channel.onopen?.(); expect(channel.send).not.toHaveBeenCalled();
+    channel.onopen?.();
+    expect(network.mock.calls[1][1]).toMatchObject({ method: "PATCH", body: JSON.stringify({ type: "channel_ready" }) });
+    expect(channel.send).not.toHaveBeenCalled();
     await voice.stop();
   });
   it("invia le preferenze solo all’avvio e mostra la trascrizione del cliente solo in pagina", async () => {

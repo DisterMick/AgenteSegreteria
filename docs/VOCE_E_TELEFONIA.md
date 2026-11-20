@@ -55,7 +55,7 @@ flowchart LR
 - **Non far cambiare numero al locale e non chiedere la portabilità.** Il locale imposta una **deviazione di chiamata** verso un nostro numero. È reversibile in un minuto e il ristoratore non rischia nulla.
 - **Modalità consigliata per iniziare: "trabocco".** L'agente risponde solo se nessuno risponde entro N squilli o se la linea è occupata. Si vende meglio ("non perdi più chiamate durante il servizio") e il rischio è minore.
 - **Codici di deviazione:** quelli GSM standard (`**61*numero#` mancata risposta, `**67*numero#` occupato, `##002#` per disattivare tutto) valgono sui cellulari. Sulle linee fisse TIM e di altri operatori i codici cambiano a seconda della tecnologia (si trovano anche `*22*` / `*23*`), e alcuni operatori fanno pagare la deviazione. **Va verificato operatore per operatore** e conviene prepararne una guida per l'onboarding.
-- **Attenzione al loop dell'handoff:** se la linea del ristorante devia verso l'agente, l'agente non può ritrasferire la chiamata **allo stesso numero**, perché la chiamata tornerebbe all'agente. L'handoff deve andare al cellulare del titolare o a una seconda linea, da raccogliere nella config del locale (`agent.json`).
+- **Attenzione al loop dell'handoff:** se la linea del ristorante devia verso l'agente, l'agente non può ritrasferire la chiamata **allo stesso numero**, perché la chiamata tornerebbe all'agente. L'handoff deve andare al cellulare del titolare o a una seconda linea, configurata in `config/tenants/pizzeria-demo/restaurant.json`. Il validatore normalizza il prefisso internazionale e rifiuta due numeri equivalenti.
 
 ### Da chi prendere i numeri
 
@@ -94,6 +94,8 @@ Queste indicazioni non sono una consulenza legale: prima del primo cliente pagan
 | Carrier del pilota | Twilio, un numero geografico per locale |
 | Modalità di risposta | Trabocco (occupato / mancata risposta), mai deviazione totale all'inizio |
 | Destinazione dell'handoff | Cellulare del titolare, nella config del locale; mai la linea che devia |
+
+Nel laboratorio `phone.main_number` e `phone.handoff_number` sono entrambi `null`. `channels.web.first_speaker` vale `caller`, mentre `channels.phone.first_speaker` vale `agent` e usa `greeting`. La configurazione prepara un eventuale collegamento telefonico successivo.
 
 ## Fonti
 
