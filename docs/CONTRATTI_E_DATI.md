@@ -53,6 +53,8 @@ Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → 
 - Nel laboratorio il browser può inoltrare `playback_finished` con il solo ID di risposta; il server lo correla al proprio riepilogo completato e validato. Il riscontro non sostituisce il nuovo assenso ASR e non seleziona dettagli o permessi. Cancellazione audio, revisione e scadenza prevalgono; dopo due fallimenti non si ripete lo stesso riepilogo.
 - Dopo due chiarimenti falliti il controller offre il personale. Un assenso in un nuovo turno registra `not_understood`. Il personale può consultare il file locale.
 
+Il runner usa un archivio temporaneo per conversazione. Confronta tutti i campi attesi delle nuove righe, l’integrità delle righe iniziali e il motivo del passaggio al personale letto da disco.
+
 ## Persistenza minima
 
 | Entità | Campi essenziali | Vincoli |

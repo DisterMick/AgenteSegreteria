@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "eval:booking": "vitest run evals/prenotazione.test.ts"
+    "eval:booking": "vitest run evals/prenotazione.test.ts",
+    "eval:scenarios": "tsx evals/cli.ts"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -29,6 +30,7 @@
     "@types/ws": "8.18.2",
     "eslint": "10.15.0",
     "eslint-config-next": "16.4.6",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.1.1",
     "yaml": "2.9.1"
