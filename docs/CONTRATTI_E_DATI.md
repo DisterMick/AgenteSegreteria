@@ -2,6 +2,8 @@
 
 Implementazione attuale: [prenotazioni persistenti locali](PRENOTAZIONI_LOCALI.md). `restaurant_action` invia proposte all'harness; il modello non può invocare scritture. `check_availability` accetta `details` opzionali e `prepare_confirmation` accetta `name`. Il controller salva solo dopo riepilogo riprodotto e conferma nel nuovo turno audio, legata alla revisione corrente. Sessione e input audio provengono dal canale server OpenAI; stato/stop HTTP dal cookie locale. Handoff e contratti DB/pannello indicati sotto restano futuri; il laboratorio applica lock e unicità nel file locale, usando sessione/revisione come chiave idempotente e UUID come identificativo.
 
+I copioni distinguono le prenotazioni iniziali dalle nuove righe della sessione. Il confronto finale verifica entrambe.
+
 ## Dati del ristorante demo
 
 **Pizzeria Demo** è un locale inventato. Questi dati servono solo a rendere ripetibili le prove; non descrivono un'attività reale.

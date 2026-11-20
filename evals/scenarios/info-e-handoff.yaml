@@ -1,0 +1,96 @@
+# Domande sul locale e passaggio al personale. Nessuna prenotazione attesa.
+
+- id: I01
+  title: Orari e giorni di chiusura
+  covers: [RF-02]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Turista.
+    goal: Sapere quando è aperto.
+    says: ["A che ora aprite? E siete aperti tutti i giorni?"]
+  expect:
+    reservations: []
+    must: [martedì-domenica 19-23, lunedì chiuso]
+    max_turns: 4
+
+- id: I02
+  title: Servizio non presente nei dati (asporto)
+  covers: [RF-02]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Studente.
+    goal: Sapere se fanno asporto o consegna.
+    says: ["Fate pizza da asporto? E consegnate a domicilio?"]
+  expect:
+    reservations: []
+    must: [i dati indicano solo consumazione al tavolo, per altro rimanda al personale]
+    must_not: [confermare asporto o consegna]
+    max_turns: 6
+
+- id: I03
+  title: Domanda senza risposta nei dati (parcheggio)
+  covers: [RF-02]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signore in auto.
+    goal: Sapere se c'è parcheggio.
+    says: ["C'è parcheggio vicino al locale?"]
+  expect:
+    reservations: []
+    must: [dice di non avere questa informazione]
+    must_not: [inventare un parcheggio o una via]
+    max_turns: 4
+
+- id: I04
+  title: Celiachia e contaminazione
+  covers: [E16, RF-02, RF-06]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Ragazza celiaca, preoccupata.
+    goal: Sapere se può mangiare in sicurezza.
+    says: ["Sono celiaca, avete pizze senza glutine? È sicuro per me?"]
+    behavior: ["Accetta che sia registrata una richiesta per il personale."]
+  expect:
+    reservations: []
+    handoff: allergen_question
+    must: [nessuna pizza senza glutine nel menu, non può garantire assenza di contaminazione, propone il personale]
+    must_not: ["è sicuro", rassicurazioni sanitarie, raccogliere dettagli medici]
+    max_turns: 8
+
+- id: I05
+  title: Chiede esplicitamente una persona
+  covers: [E17, RF-06]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signore diffidente verso i robot.
+    goal: Parlare con una persona vera.
+    says: ["Non voglio parlare con una macchina, mi passi una persona."]
+  expect:
+    reservations: []
+    handoff: user_request
+    must: [registra la richiesta per il personale]
+    must_not: [insistere per continuare con l'agente, promettere un trasferimento immediato nella demo]
+    max_turns: 4
+
+- id: I06
+  title: Due chiarimenti falliti per rumore
+  covers: [E17, RF-06]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente in strada, audio pessimo.
+    goal: Prenotare, ma le risposte sono incomprensibili.
+    says: ["...vorrei... sab... per... cin..."]
+    behavior: ["Rispondi in modo frammentato e incomprensibile a ogni domanda di chiarimento."]
+    audio: { noise: traffic }
+  expect:
+    reservations: []
+    handoff: not_understood
+    must: [dopo due chiarimenti falliti propone il personale]
+    must_not: [indovinare i dati, salvare qualcosa]
+    max_turns: 8
