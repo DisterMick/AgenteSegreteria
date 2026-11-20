@@ -1,6 +1,10 @@
 # Piano di collaudo e valutazione
 
-Stato: lo scheletro include 22 test automatici delle regole di disponibilità, del dataset e dell'endpoint HTTP. La suite completa E01–E20 e le prove vocali restano da implementare ed eseguire. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
+Stato: le suite automatiche coprono disponibilità, dataset, confine HTTP, harness e integrazione vocale con trasporto simulato, budget persistente, timer e rilascio risorse. La suite completa E01–E20 e le prove audio con OpenAI reale restano da completare. Le soglie sono quelle proposte nel [PRD](PRD-agente-segreteria.md).
+
+## Harness offline (prima dei test vocali)
+
+La suite `src/lib/agent/harness.test.ts` copre una parte dei confini applicativi: azioni non consentite, argomenti extra, revisioni obsolete, invalidazione dei controlli e impossibilità di scrivere prenotazioni. Vedi [AGENT_SECURITY_EVALS.md](AGENT_SECURITY_EVALS.md). **Non sono prove di resistenza ai prompt injection del modello** e non sostituiscono E01–E20.
 
 ## Metodo
 
@@ -36,6 +40,8 @@ Separare tre livelli: logica e contratti senza modello; integrazione con databas
 Per E09 eseguire almeno 20 coppie concorrenti con reset tra le prove; contare le righe, non solo le risposte HTTP. Per E07/E11 verificare la persistenza anche quando il processo applicativo viene riavviato.
 
 ## Campione conversazionale
+
+`npm run eval:booking` esegue E01, E02, E05 ed E06 con orologio fisso, risposte italiane prestabilite e un archivio temporaneo riletto dopo la conversazione. Verifica successo, rinuncia, correzione del cognome e scelta di un altro turno. Le stesse prove fanno parte di `npm test` in CI. La prova con microfono misura separatamente riconoscimento e parlato.
 
 Prima di chiudere la fase C preparare almeno 20 conversazioni valide di prenotazione con risultato atteso esplicito. Variare formulazione, coperti, nomi inventati, chiarimenti e correzioni mantenendo disponibilità nota. Eseguire separatamente i casi di rifiuto, guasto e attacco: non mescolarli al denominatore delle richieste valide.
 

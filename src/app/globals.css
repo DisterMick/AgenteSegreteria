@@ -70,6 +70,22 @@ fieldset:disabled button { cursor: wait; }
 .next-step h2 { font-family: Arial, Helvetica, sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: normal; }
 .next-step p { margin: 0; color: var(--muted); font-size: .8125rem; }
 .badge-muted { background: transparent; }
+.voice-panel { padding: 2rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.voice-panel > p { font-size: .875rem; color: var(--muted); }
+.voice-budget { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding-block: 1rem; border-block: 1px solid var(--line); }
+.voice-budget span { display: block; font-size: .75rem; color: var(--muted); }
+.voice-budget strong { display: block; font-size: 1rem; }
+.voice-help { font-size: .75rem !important; margin-top: 1rem; }
+.voice-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+.voice-actions button { width: auto; margin-top: .5rem; }
+.secondary-button { color: var(--ink); background: transparent; }
+.secondary-button:hover { color: white; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.voice-message { margin-block: 1rem; }
+.voice-panel audio { width: min(100%, 24rem); }
+.voice-caption { padding: 1rem; border-left: 3px solid var(--accent); background: #edf2e8; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .voice-budget { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .voice-panel { padding: 1.25rem; } .voice-actions button { width: 100%; } }
 footer { display: flex; justify-content: space-between; gap: 1rem; padding-block: 2rem; margin-top: 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .6875rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .skip-link { position: fixed; top: -6rem; left: 1rem; z-index: 10; padding: .75rem 1rem; background: var(--surface); }
@@ -84,6 +100,7 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
 }
 @media (max-width: 480px) {
   .shell { width: calc(100% - 2rem); }
+  .site-header { flex-wrap: wrap; }
   .brand small { display: none; }
   .brand { font-size: .8125rem; gap: .5rem; }
   .brand-mark { width: 2.5rem; height: 2.5rem; }

@@ -1,6 +1,6 @@
 # Contratti degli strumenti e dati
 
-Specifica proposta per gli strumenti vocali, non ancora disponibili. Lo scheletro espone soltanto una verifica HTTP simulata di data, turno e coperti, documentata nel README. Tutti gli argomenti saranno validati dal server; campi inattesi vengono rifiutati già nella verifica HTTP. Sessione e identità saranno ricavate dal contesto autenticato, mai accettate sulla fiducia dal modello.
+Implementazione attuale: [prenotazioni persistenti locali](PRENOTAZIONI_LOCALI.md). `restaurant_action` invia proposte all'harness; il modello non può invocare scritture. `check_availability` accetta `details` opzionali e `prepare_confirmation` accetta `name`. Il controller salva solo dopo riepilogo riprodotto e conferma nel nuovo turno audio, legata alla revisione corrente. Sessione e input audio provengono dal canale server OpenAI; stato/stop HTTP dal cookie locale. Handoff e contratti DB/pannello indicati sotto restano futuri; il laboratorio applica lock e unicità nel file locale, usando sessione/revisione come chiave idempotente e UUID come identificativo.
 
 ## Dati del ristorante demo
 
@@ -19,7 +19,9 @@ Specifica proposta per gli strumenti vocali, non ancora disponibili. Lo scheletr
 
 Il menu non garantisce assenza di contaminazioni. Una richiesta di sicurezza alimentare non documentata passa al personale. Non raccogliere diagnosi o dettagli medici nelle note.
 
-Il file `src/data/restaurant.json` include versione e data di revisione ed è validato al caricamento. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
+Il file `config/tenants/pizzeria-demo/restaurant.json` include versione e data di revisione ed è validato al caricamento. Per i test si fissa l'orologio a una data nota e si usano date future rispetto a quell'orologio; niente fixture che scadono con il calendario.
+
+La disponibilità restituisce il motivo strutturato e, per turno pieno, passato o fuori orario, gli altri orari verificati nella stessa data. Ogni chiamata può salvare un solo tavolo. Un tentativo con gli stessi dettagli restituisce la ricevuta originale anche con un’altra revisione.
 
 ## Strumenti consentiti
 
@@ -44,6 +46,7 @@ Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → 
 - Il controller genera `confirmation_id` solo dopo riepilogo e conferma esplicita riferita alla revisione corrente. Un parametro `confirmed: true` inviato dal modello non è prova sufficiente.
 - La conferma è associata a sessione, bozza, revisione e dettagli; scade dopo due minuti o alla prima modifica. Il client non sceglie il contenuto di un'autorizzazione server.
 - La decisione che un «sì» confermi la bozza deve essere verificata contro il turno effettivo dell'utente e il riepilogo emesso; audio o trascrizione ambigui richiedono una nuova domanda. Nessuna pretesa di prova certa dell'intenzione attraverso il solo modello.
+- Nel laboratorio il browser può inoltrare `playback_finished` con il solo ID di risposta; il server lo correla al proprio riepilogo completato e validato. Il riscontro non sostituisce il nuovo assenso ASR e non seleziona dettagli o permessi. Cancellazione audio, revisione e scadenza prevalgono; dopo due fallimenti non si ripete lo stesso riepilogo.
 - Dopo due tentativi di chiarimento senza esito, proporre handoff. Nella demo significa richiesta visibile nel pannello, non una telefonata trasferita.
 
 ## Persistenza minima

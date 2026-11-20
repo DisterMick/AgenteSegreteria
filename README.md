@@ -2,7 +2,7 @@
 
 Receptionist AI vocale in italiano per un ristorante: risponde alle domande, verifica i tavoli disponibili e crea prenotazioni dopo la conferma del cliente.
 
-**Stato al 18 novembre 2026:** documentazione iniziale e scheletro locale Next.js/TypeScript. La pagina mostra i dati fittizi della pizzeria e verifica le disponibilità simulate sul server. Voce, salvataggio prenotazioni, autenticazione e database non sono ancora implementati.
+**Stato al 19 novembre 2026.** La pizzeria salva sul computer dopo una conferma esplicita. Il browser mostra la trascrizione del cliente e la ricevuta. Modello e timbro si scelgono prima della chiamata. Le prove locali verificano anche rifiuti, correzioni e turni pieni. Le chiamate a pagamento sono in pausa in attesa della prova di ascolto. [Voce e diagnostica](docs/VOCE_REALTIME.md).
 
 Repository GitHub: [DisterMick/AgenteSegreteria](https://github.com/DisterMick/AgenteSegreteria).
 
@@ -22,6 +22,7 @@ Il modello interpreta la conversazione; il backend applica i permessi e le regol
 | [Sicurezza e privacy](docs/SICUREZZA_E_PRIVACY.md) | Confini di fiducia, accessi, dati personali e costi |
 | [Collaudo](docs/COLLAUDO.md) | Casi normali, errori, attacchi e metriche |
 | [Piano di sviluppo](docs/PIANO_DI_SVILUPPO.md) | Fasi, dipendenze e condizioni per avanzare |
+| [Voce Realtime](docs/VOCE_REALTIME.md) | Configurazione, limiti effettivi, costi e recupero |
 
 ## Perimetro della prima versione
 
@@ -43,12 +44,15 @@ npm ci
 npm run dev
 ```
 
-Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). Non servono chiavi API né un file `.env`; `.env.example` documenta questa scelta. Avvio e prove non chiamano servizi AI o database e non generano consumi API.
+Aprire [http://127.0.0.1:3000](http://127.0.0.1:3000). La verifica testuale e i test non richiedono credenziali e non generano consumi API. Per parlare con l'agente crea `.env.local` con `OPENAI_API_KEY` e `OPENAI_REALTIME_ENABLED=true`, poi riavvia il server: vedi [configurazione voce](docs/VOCE_REALTIME.md). Non incollare la chiave in chat né in variabili pubbliche.
 
-La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Tutti i tavoli del simulatore partono liberi: nessuna richiesta blocca posti o salva prenotazioni.
+La chiamata impegna 0,50 USD del plafond locale: massimo 2,00 USD al giorno, 9 USD complessivi, tre minuti e una chiamata alla volta. Il costo stimato dai token è separato dalla quota impegnata e dal saldo OpenAI. Il caricamento della pagina non avvia chiamate a pagamento.
+
+La verifica accetta date future entro 30 giorni nel fuso `Europe/Rome`, giorni di apertura, turni delle 19:00 o 21:00 e gruppi da 1 a 4. Il calcolo legge le prenotazioni salvate e, quando possibile, indica altri turni disponibili nella stessa data.
 
 ```sh
 npm test
+npm run eval:booking
 npm run lint
 npm run typecheck
 npm run build
@@ -63,20 +67,31 @@ npm start
 | --- | --- |
 | `src/app/` | Pagina, layout, stili e API HTTP |
 | `src/components/availability-form.tsx` | Modulo con attesa, esito ed errori |
-| `src/data/restaurant.json` | Dati fittizi versionati del locale |
+| `config/tenants/pizzeria-demo/restaurant.json` | Dati fittizi versionati del locale |
 | `src/lib/restaurant.ts` | Validazione del dataset e orologio del ristorante |
-| `src/lib/availability.ts` | Regole condivise di disponibilità simulata |
+| `src/domain/booking/availability.ts` | Regole di disponibilità a turni fissi e scelta dei tavoli idonei |
+| `src/lib/reservations.ts` | Archivio locale con lock, controllo capienza e idempotenza |
+| `src/lib/agent/booking.ts` | Riepilogo, conferma vocale e salvataggio controllato |
+| `src/lib/agent/harness.ts` | Controller puro: allowlist, bozza, revisioni e blocco delle scritture |
+| `src/lib/voice/` | WebRTC browser, controllo server, plafond persistente e stima consumi |
+| `src/app/api/voice/route.ts` | Avvio, stato e stop della sessione locale, con verifica origine e cookie privato |
 | `*.test.ts` | Prove deterministiche delle regole e del confine HTTP |
 
-`POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `status: "available"`, dettagli, conteggio tavoli idonei e `simulated: true`, oppure HTTP 400 con `status: "invalid"` e un messaggio. Non è ancora lo strumento vocale `check_availability`: sessioni e revisioni verranno aggiunte con il controller della fase A.
+`POST /api/availability` accetta soltanto `{ "date": "YYYY-MM-DD", "time": "HH:mm", "party_size": 2 }`. Risponde con `available` e conteggio tavoli liberi, `unavailable` se pieni, HTTP 400 `invalid` per dati non prenotabili o HTTP 503 se l'archivio è illeggibile. `simulated: true` identifica il locale inventato; i tavoli già salvati sono occupati. Nessun risultato pubblico contiene dati dei clienti.
 
 ## Tecnologie
 
 Implementati: Next.js, React e TypeScript per interfaccia e backend, Zod per validare dati e input, Vitest per i test. Setup basato sulla [guida ufficiale Next.js](https://nextjs.org/docs/app/getting-started/installation), senza font remoti o servizi esterni richiesti in avvio.
 
-Previsti: OpenAI Realtime via WebRTC per la voce, Supabase PostgreSQL per le prenotazioni e Playwright per il collaudo del browser. L'Agents SDK è un candidato da valutare, non una dipendenza adottata.
+La voce usa OpenAI Realtime via WebRTC e `ws` sul server. Le prenotazioni del laboratorio usano un file locale, come richiesto; Supabase PostgreSQL resta futuro per hosting e più server. Nessuna dipendenza aggiunta per l'archivio.
 
 Il modello e le tariffe vanno verificati sull'account e sulla documentazione ufficiale prima delle prove a pagamento. Il budget di laboratorio proposto nel brief è di **9 USD**, non un credito verificato né una stima sufficiente per un servizio operativo.
+
+## Laboratorio offline dell'agente
+
+L'harness puro valida proposte, bozza e revisione. `BookingController` lega il riepilogo al successivo turno audio; il modello non dispone di uno strumento di scrittura. Solo la conferma verificata dal controller può salvare in `.local/reservations.json`. I test funzionano senza crediti API; l'handoff resta non implementato.
+
+Nuovi documenti: [decisione sulla pipeline vocale](docs/ADR-001-VOICE-PIPELINE.md), [protocollo benchmark voce](docs/VOICE_BENCHMARK.md) e [security evals](docs/AGENT_SECURITY_EVALS.md). La CI esegue lint, typecheck, test e build sulle PR.
 
 ## Da dove iniziare
 

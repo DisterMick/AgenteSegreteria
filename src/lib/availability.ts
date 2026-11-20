@@ -1,44 +1,29 @@
 import { z } from "zod";
+import { bookingRequestSchema, evaluateAvailability, type OccupiedTable } from "@/domain/booking/availability";
 import { restaurant, restaurantClock } from "./restaurant";
 
-const requestSchema = z.strictObject({
-  date: z.iso.date(),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
+export type { OccupiedTable };
+export const availabilityRequestSchema = bookingRequestSchema.extend({
   party_size: z.number().int().min(1).max(restaurant.max_party_size),
 });
 
-export type AvailabilityResult =
-  | { status: "invalid"; message: string }
-  | { status: "available"; date: string; time: string; party_size: number; available_tables: number; simulated: true };
-
-export function checkAvailability(input: unknown, now = new Date()): AvailabilityResult {
-  const parsed = requestSchema.safeParse(input);
-  if (!parsed.success) {
-    return { status: "invalid", message: "Controlla data, turno e numero di persone (da 1 a 4)." };
+function availabilityMessage(result: Exclude<ReturnType<typeof evaluateAvailability>, { status: "available" }>) {
+  switch (result.code) {
+    case "INVALID_INPUT": return "Controlla data, ora e numero di persone.";
+    case "PARTY_SIZE_OUT_OF_RANGE": return `Puoi prenotare per un gruppo da ${result.params.min} a ${result.params.max} persone.`;
+    case "DATE_OUT_OF_RANGE": return `Scegli una data da oggi ai prossimi ${result.params.days} giorni.`;
+    case "CLOSED_DAY": return "Il locale è chiuso quel giorno. Scegli un’altra data.";
+    default: {
+      const reason = { INVALID_SHIFT: "A quest’ora non inizia un turno.", SHIFT_STARTED: "Questo turno è già iniziato.", NO_AVAILABILITY: "Per questo turno i tavoli adatti sono occupati." }[result.code];
+      return result.alternatives.length
+        ? `${reason} Per lo stesso giorno c’è posto alle ${result.alternatives.join(" oppure alle ")}.`
+        : `${reason} Per questo gruppo non ci sono altri turni disponibili quel giorno.`;
+    }
   }
-
-  const { date, time, party_size } = parsed.data;
-  const clock = restaurantClock(now);
-  const lastDay = new Date(`${clock.date}T00:00:00Z`);
-  lastDay.setUTCDate(lastDay.getUTCDate() + restaurant.booking_horizon_days);
-
-  if (date < clock.date || date > lastDay.toISOString().slice(0, 10)) {
-    return { status: "invalid", message: "Scegli una data da oggi ai prossimi 30 giorni." };
-  }
-  if (!restaurant.opening_days.includes(new Date(`${date}T00:00:00Z`).getUTCDay())) {
-    return { status: "invalid", message: "Il lunedì la pizzeria è chiusa. Scegli un altro giorno." };
-  }
-  if (!restaurant.shifts.some((shift) => shift.start === time)) {
-    return { status: "invalid", message: "I turni disponibili iniziano alle 19:00 e alle 21:00." };
-  }
-  if (date === clock.date && time <= clock.time) {
-    return { status: "invalid", message: "Questo turno è già iniziato. Scegli un turno futuro." };
-  }
-
-  // shortcut: tutti i tavoli demo sono liberi, sostituire con dati persistenti nella fase B.
-  return {
-    status: "available", date, time, party_size,
-    available_tables: restaurant.tables.filter((table) => table.seats >= party_size).length,
-    simulated: true,
-  };
 }
+
+export function checkAvailability(input: unknown, now = new Date(), occupied: OccupiedTable[] = []) {
+  const result = evaluateAvailability(input, restaurant, restaurantClock(now), occupied);
+  return result.status === "available" ? result : { ...result, message: availabilityMessage(result) };
+}
+export type AvailabilityResult = ReturnType<typeof checkAvailability>;

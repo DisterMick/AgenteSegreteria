@@ -1,17 +1,20 @@
 import { z } from "zod";
-import data from "@/data/restaurant.json";
+import data from "../../config/tenants/pizzeria-demo/restaurant.json";
 
 const time = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 
-export const restaurant = z.strictObject({
+export const restaurantSchema = z.strictObject({
   name: z.string().min(1),
   version: z.number().int().positive(),
   reviewed_on: z.iso.date(),
-  timezone: z.literal("Europe/Rome"),
+  timezone: z.string().min(1).refine(value => {
+    try { new Intl.DateTimeFormat("it", { timeZone: value }); return true; } catch { return false; }
+  }),
   opening_days: z.array(z.number().int().min(0).max(6)).min(1),
+  closed_dates: z.array(z.iso.date()),
   hours: z.strictObject({ opens: time, closes: time }),
-  booking_horizon_days: z.literal(30),
-  max_party_size: z.literal(4),
+  booking_horizon_days: z.number().int().nonnegative(),
+  max_party_size: z.number().int().positive(),
   shifts: z.array(z.strictObject({ start: time, end: time })).min(1),
   tables: z.array(z.strictObject({ id: z.string().min(1), seats: z.number().int().positive() })).min(1),
   menu: z.array(z.strictObject({
@@ -19,11 +22,16 @@ export const restaurant = z.strictObject({
   })).min(1),
   services: z.array(z.string().min(1)),
   allergen_notice: z.string().min(1),
-}).parse(data);
+}).refine(r => new Set(r.tables.map(t => t.id)).size === r.tables.length && r.tables.some(t => t.seats >= r.max_party_size),
+  "Tavoli duplicati o capienza insufficiente")
+  .refine(r => r.shifts.every(s => r.hours.opens <= s.start && s.start < s.end && s.end <= r.hours.closes
+    && !r.shifts.some(other => other !== s && s.start < other.end && other.start < s.end)), "Turni sovrapposti o fuori orario");
 
-export function restaurantClock(now = new Date()) {
+export const restaurant = restaurantSchema.parse(data);
+
+export function restaurantClock(now = new Date(), timeZone = restaurant.timezone) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
-    timeZone: restaurant.timezone,
+    timeZone,
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).formatToParts(now).map(({ type, value }) => [type, value]));

@@ -11,23 +11,32 @@ Le caselle indicano lo stato dell'implementazione. Le fasi hanno criteri di usci
 - [ ] Verificare accesso ai servizi, disponibilità del modello e tariffe correnti; assegnare il budget effettivo.
 - [x] Implementare dataset fittizio e primo test senza rete delle regole data/turno/coperti.
 
-Lo scheletro include una verifica HTTP di sola lettura, prima delle sessioni vocali. Nessuna integrazione a pagamento è attiva; la fase 0 resta aperta sulla verifica degli account e del budget.
+L'app include la verifica HTTP di sola lettura e l'integrazione Realtime opzionale. La voce resta disabilitata senza chiave e flag esplicito; la fase 0 resta aperta sulla verifica dell'account e del credito effettivo.
 
 **Uscita:** progetto avviabile localmente con istruzioni ripetibili, dati validati, nessun segreto versionato e nessuna chiamata a pagamento involontaria. Per il codice, prevedere controlli di tipi, lint e test pertinenti eseguibili anche in CI.
 
 ## Fase A — Voce nel browser e simulatore
 
-- [ ] Pagina con dichiarazione AI/demo, avvio/arresto accessibili, stato ed errori testuali.
-- [ ] Apertura sessione autorizzata con credenziali temporanee, limiti di durata e consumo.
-- [ ] Collegamento WebRTC, gestione microfono, interruzioni e rilascio risorse.
-- [ ] `get_restaurant_info` con dati approvati e `check_availability` su simulatore deterministico.
+- [x] Introdurre un primo harness **offline** con allowlist delle proposte, validazioni, revisioni e test dei casi malevoli; senza modello né operazioni di scrittura.
+- [x] Documentare l'architettura vocale modulare come proposta e definire i protocolli di confronto voce/security.
+- [ ] Collegare un modello testuale a un controller **server-side** autenticato e verificare le tool call con test end-to-end; l'harness offline non rappresenta ancora questo traguardo.
+
+- [x] Pagina con dichiarazione AI/demo, avvio/arresto accessibili, stato ed errori testuali.
+- [x] Apertura Realtime con chiave solo server, cookie locale e plafond persistente; scambio SDP unificato senza chiave inviata al browser.
+- [x] Implementare WebRTC, microfono, VAD con interruzioni e rilascio risorse; validazione audio reale ancora aperta.
+- [x] Collegare `get_restaurant_info` e `check_availability` all'harness attraverso il canale server; test con provider simulato.
 - [ ] Controller con raccolta bozza, revisioni, riepilogo e conferma; creazione simulata chiaramente etichettata.
 - [ ] Richiesta al personale simulata, senza promettere un trasferimento telefonico.
-- [ ] Misura di una sessione breve; valutazione dell'Agents SDK solo se riduce il lavoro necessario.
+- [x] Eseguire una prima sessione reale breve e registrare connessione, risposta audio, chiusura e costo stimato nel benchmark.
+- [ ] Misurare latenza, barge-in, qualità percepita e conversazione vocale completa; valutare l'Agents SDK solo se riduce il lavoro necessario.
+
+La richiesta corrente adotta OpenAI Realtime come prima integrazione. Il modello testuale separato/LiveKit resta uno studio futuro. Test automatici e prima sessione reale disponibili; qualità del barge-in, latenza e intero campione conversazionale restano da misurare. Vedi [VOCE_REALTIME.md](VOCE_REALTIME.md).
 
 **Uscita:** una conversazione completa nel browser, una correzione gestita senza usare risultati vecchi, un errore di connessione leggibile e consumi registrati. Nessuna simulazione viene presentata come prenotazione reale.
 
 ## Fase B — Prenotazioni persistenti e pannello
+
+Traguardo locale aggiunto su richiesta: archivio su disco, controllo capienza sotto lock, idempotenza e conferma vocale implementati e verificati offline. Vedi [PRENOTAZIONI_LOCALI.md](PRENOTAZIONI_LOCALI.md). La checklist seguente riguarda database condiviso e pannello; il collaudo audio reale resta aperto.
 
 - [ ] Progettare e versionare schema, migrazioni e seed per i [dati minimi](CONTRATTI_E_DATI.md).
 - [ ] Implementare salvataggio transazionale con vincolo tavolo/data/turno e una prenotazione per bozza.

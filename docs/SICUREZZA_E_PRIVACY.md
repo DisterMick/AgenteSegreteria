@@ -2,6 +2,8 @@
 
 Questi sono requisiti da implementare e verificare. Non descrivono controlli già attivi né attestano conformità per un servizio reale.
 
+Per la voce locale sono ora implementati controlli di origine e host loopback, cookie di sessione privato, chiave esclusivamente server, strumenti tramite harness, plafond persistente, timer browser/server e chiusura provider. Le prove automatiche usano un provider simulato; serve ancora la prova audio reale. Configurazione e limiti effettivi sono in [VOCE_REALTIME.md](VOCE_REALTIME.md). L'autenticazione per una demo remota non è implementata.
+
 ## Stato delle dipendenze dello scheletro
 
 Il 18 novembre 2026 `npm audit` segnala una vulnerabilità di esaurimento delle risorse in `picomatch`, dipendenza transitiva degli strumenti di sviluppo e test. L'[avviso GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) non indica una versione corretta disponibile. Gli avvisi propagati ai pacchetti che lo usano non rappresentano vulnerabilità indipendenti.
@@ -48,17 +50,19 @@ Prima di un pilota reale definire informativa, finalità, basi del trattamento, 
 
 ## Budget e contenimento dei consumi
 
-Valori iniziali proposti, da confermare prima delle prove a pagamento:
+Valori applicati alla voce Realtime locale; la disponibilità effettiva del credito va verificata prima delle prove:
 
 | Limite | Valore |
 | --- | --- |
 | Budget complessivo laboratorio | 9 USD, disponibilità effettiva da verificare |
-| Budget giornaliero | 1 USD |
+| Budget giornaliero | 2,00 USD |
 | Budget per sessione | 0,50 USD |
 | Durata massima sessione | 3 minuti |
 | Sessioni vocali simultanee | 1 |
 
-Il backend deve verificare il budget prima di aprire una sessione, riservare margine per il consumo in corso e aggiornare il totale con i dati d'uso disponibili. La pagina mostra la stima e distingue i costi non ancora riconciliati. Al limite interrompere nuove sessioni e chiudere la connessione vocale; riaprire la pagina non azzera i contatori persistiti.
+Il backend verifica e impegna 0,50 USD di plafond prima di ogni tentativo, senza rimborso locale; mostra separatamente una stima prudente dai token osservati sul canale server. Con il modello completo interrompe a 0,30 USD stimati, 24 risposte o 180 secondi. Al limite chiude anche la chiamata OpenAI. Riaprire la pagina non azzera i contatori; il ledger non contiene nomi/audio/trascrizioni. Il file `.local/voice-paused` impedisce nuove chiamate prima dell'impegno di quota.
+
+I log locali ruotati `voice-events.jsonl` contengono solo campi tecnici in allowlist; il riferimento diagnostico è distinto dalla sessione privata. Niente testo del provider, argomenti degli strumenti, nomi o trascrizioni. Vedi [diagnostica](VOCE_REALTIME.md#diagnostica-locale). Il riscontro audio dal browser è un segnale correlato a un riepilogo server noto: non concede permessi e non sostituisce l'assenso nel turno ASR sul server.
 
 Le soglie applicative non garantiscono un tetto contabile esatto: ritardi di rendicontazione e consumo già avviato possono causare scostamenti. Impostare anche i controlli disponibili sull'account provider, verificandone l'effettivo comportamento. Nessuna tariffa fissa è assunta da questo documento.
 
