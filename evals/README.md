@@ -66,7 +66,12 @@ I casi E14 (accesso al pannello), E18 (microfono/risorse), E19 (budget) ed E20 (
 
 **Varianti vocali.** Per le prove con la voce, le battute del cliente si sintetizzano con un TTS italiano applicando `audio` (rumore di cucina, ritmo, accento). Il resto non cambia. Vanno registrate a parte rispetto alle prove testuali (vedi COLLAUDO.md).
 
-**Ripetizioni.** Gli LLM non sono deterministici. Esegui ogni scenario valido almeno 3 volte e riporta la percentuale, non solo "passato".
+**Esecuzione da terminale**
+
+- `npm run eval:scenarios` mostra numero di scenari, conversazioni e stima indicativa. La stima assume 14 completamenti per conversazione da 2.500 token in ingresso e 130 in uscita.
+- `npm run eval:scenarios -- --scripted` esegue V01 (tre volte), C01, A03 e I04–I06 a costo zero. I medesimi copioni girano in CI con Vitest.
+- Solo con approvazione di spesa, `npm run eval:scenarios -- --paid --max-usd IMPORTO` attiva il modello testuale. In CI il comando rifiuta questa modalità. Prezzi standard di [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini) fissati nel runner. Prima di una chiamata si riserva il massimo stimato per ingresso e uscita. In caso di risposta priva di utilizzo il runner mantiene la riserva e si ferma.
+- I rapporti incrementali in `.local/eval-reports/` contengono codici, strumenti, turni, spesa e giudizio semantico. La percentuale sui 20 casi V appare solo dopo tutte le 60 verifiche. Un campione parziale mostra il conteggio. Casi di sistema e telefonici sono segnalati a parte. I casi A usano battute fissate; il modello riceve il ruolo di cliente solo per gli altri casi web.
 
 ## Calendario di riferimento (clock mercoledì 18/11/2026, 16:00)
 

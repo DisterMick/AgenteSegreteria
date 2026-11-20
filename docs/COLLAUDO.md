@@ -12,6 +12,8 @@ I test del controller coprono assenso colloquiale, risposte miste, correzioni e 
 
 `evals/handoff.test.ts` verifica I04–I06, le richieste ripetute dopo la riapertura, i tre campi registrati e il fallimento della scrittura.
 
+Il collaudo testuale offline esegue V01, C01, A03 e I04–I06 con strumenti reali. La percentuale sulle prenotazioni richiede 60 prove dei 20 casi validi. La semantica del parlato e la resa al microfono richiedono verifiche distinte.
+
 ## Metodo
 
 Usare il dataset fittizio di [contratti e dati](CONTRATTI_E_DATI.md), fissare l'orologio nei test automatici e ripristinare lo stato tra casi indipendenti. Nessun test usa prenotazioni o audio di clienti reali.

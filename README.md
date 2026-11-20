@@ -92,6 +92,8 @@ Il modello e le tariffe vanno verificati sull'account e sulla documentazione uff
 
 L'harness puro valida proposte, bozza e revisione. `BookingController` lega il riepilogo al successivo turno audio; il modello non dispone di uno strumento di scrittura. Solo la conferma verificata dal controller può salvare in `.local/reservations.json`. I test funzionano senza crediti API; le richieste per il personale si trovano in `.local/handoffs/`.
 
+Per eseguire i copioni gratuiti usa `npm run eval:scenarios -- --scripted`. I risultati vengono scritti in `.local/eval-reports/`. [Guida agli scenari](evals/README.md).
+
 Nuovi documenti: [decisione sulla pipeline vocale](docs/ADR-001-VOICE-PIPELINE.md), [protocollo benchmark voce](docs/VOICE_BENCHMARK.md) e [security evals](docs/AGENT_SECURITY_EVALS.md). La CI esegue lint, typecheck, test e build sulle PR.
 
 ## Da dove iniziare
