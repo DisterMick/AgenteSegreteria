@@ -30,6 +30,13 @@ export class BrowserVoice {
       };
       const channel = peer.createDataChannel("oai-events"); this.channel = channel;
       channel.onclose = () => { if (generation === this.generation) disconnected(); };
+      channel.onopen = () => {
+        if (generation !== this.generation) return;
+        void fetch("/api/voice", { method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "channel_ready" }), signal: AbortSignal.timeout(5000) })
+          .then(response => { if (!response.ok) throw new Error("CHANNEL_READY_FAILED"); })
+          .catch(() => { if (generation === this.generation) caption("Puoi iniziare a parlare."); });
+      };
       channel.onmessage = (event) => {
         if (generation !== this.generation) return;
         try {

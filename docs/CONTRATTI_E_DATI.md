@@ -55,6 +55,8 @@ Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → 
 
 Il runner usa un archivio temporaneo per conversazione. Confronta tutti i campi attesi delle nuove righe, l’integrità delle righe iniziali e il motivo del passaggio al personale letto da disco.
 
+La configurazione del locale ammette numeri internazionali o `null`. Normalizza spazi, parentesi, trattini e prefisso `00`, poi rifiuta numeri principale e di destinazione uguali. Ogni canale definisce `first_speaker` e `greeting`. Se inizia l’agente il saluto è obbligatorio.
+
 ## Persistenza minima
 
 | Entità | Campi essenziali | Vincoli |

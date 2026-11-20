@@ -1,7 +1,12 @@
 {
   "name": "Pizzeria Demo",
-  "version": 1,
-  "reviewed_on": "2026-11-18",
+  "version": 2,
+  "phone": { "main_number": null, "handoff_number": null },
+  "channels": {
+    "web": { "first_speaker": "caller", "greeting": null },
+    "phone": { "first_speaker": "agent", "greeting": "Pizzeria Demo, sono l’assistente virtuale. Come posso aiutarla?" }
+  },
+  "reviewed_on": "2026-11-20",
   "timezone": "Europe/Rome",
   "opening_days": [2, 3, 4, 5, 6, 0],
   "closed_dates": [],

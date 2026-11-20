@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const service = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn(), status: vi.fn(), acknowledgePlayback: vi.fn() }));
+const service = vi.hoisted(() => ({ start: vi.fn(), channelReady: vi.fn(), stop: vi.fn(), status: vi.fn(), acknowledgePlayback: vi.fn() }));
 vi.mock("@/lib/voice/service", async (importOriginal) => ({ ...await importOriginal<typeof import("@/lib/voice/service")>(), realtimeVoice: service }));
 import { DELETE, GET, POST, PATCH } from "./route";
 
@@ -60,6 +60,15 @@ describe("confine HTTP voce locale", () => {
     const input = new Request("http://127.0.0.1:3000/api/voice", { method: "PATCH", headers: { Origin: "http://127.0.0.1:3000", "Content-Type": "application/json", Cookie: "pizzeria_voice=owned" }, body: JSON.stringify({ type: "playback_finished", response_id: "resp_summary" }) });
     expect((await PATCH(input)).status).toBe(200);
     expect(service.acknowledgePlayback).toHaveBeenCalledWith("owned", { type: "playback_finished", response_id: "resp_summary" });
+    expect(service.start).not.toHaveBeenCalled();
+  });
+  it("accetta solo il segnale iniziale privo di testo e lo lega alla sessione", async () => {
+    const signal = (body: unknown) => new Request("http://127.0.0.1:3000/api/voice", { method: "PATCH",
+      headers: { Origin: "http://127.0.0.1:3000", "Content-Type": "application/json", Cookie: "pizzeria_voice=owned" },
+      body: JSON.stringify(body) });
+    expect((await PATCH(signal({ type: "channel_ready", greeting: "altro" }))).status).toBe(400);
+    expect((await PATCH(signal({ type: "channel_ready" }))).status).toBe(200);
+    expect(service.channelReady).toHaveBeenCalledExactlyOnceWith("owned");
     expect(service.start).not.toHaveBeenCalled();
   });
   it("rifiuta origini, payload e autorizzazioni forgiate sul riscontro audio", async () => {

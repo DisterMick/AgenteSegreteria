@@ -60,7 +60,7 @@ export function modelRoles(s: Conversation, budget: TextBudget, key: string, ups
       'Interpreta il cliente descritto. Rispondi solo JSON {"type":"say","text":"..."} oppure {"type":"hangup"} o {"type":"silence"}. Rispetta il copione, fai solo la prossima battuta. Dopo un riepilogo corretto conferma naturalmente, salvo indicazioni diverse. Al termine saluta e riaggancia.',
       { persona, goal, says, knows, behavior, conversazione: lines })),
     receptionist: (now, lines, results, revision) => {
-      const config = realtimeConfig(now);
+      const config = realtimeConfig(now, undefined, s.channel ?? "web");
       return ask(config.instructions + '\nSimulazione solo testo. Restituisci una sola battuta JSON {"text":"..."} oppure gli argomenti JSON della funzione restaurant_action. Il controller pronuncia direttamente il riepilogo e la ricevuta.',
         { funzione: config.tools[0].parameters, conversazione: lines, strumenti: results, revision });
     },

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VoiceBudget } from "./budget";
 import { RealtimeVoice } from "./service";
 import { Reservations } from "../reservations";
+import { restaurant } from "../restaurant";
 
 class FakeSocket extends EventEmitter {
   sent: Record<string, unknown>[] = [];
@@ -59,6 +60,24 @@ describe("sessione Realtime controllata dal server", () => {
     await expect(service.stop("other")).rejects.toThrow("SESSION_NOT_FOUND");
     expect(budget.read().active).not.toBeNull();
     await service.stop(result.id); expect(budget.read().active).toBeNull();
+  });
+  it("ignora il segnale iniziale nel browser configurato per ascoltare", async () => {
+    const { id } = await start();
+    expect(() => service.channelReady("other")).toThrow("SESSION_NOT_FOUND");
+    service.channelReady(id);
+    expect(socket.sent).toHaveLength(0);
+  });
+  it.each([false, true])("un solo saluto del locale e precedenza al cliente se ha già parlato (%s)", async spoken => {
+    const original = restaurant.channels.web;
+    try {
+      restaurant.channels.web = { first_speaker: "agent", greeting: "Buongiorno dal locale di prova." };
+      const { id } = await start();
+      if (spoken) await service.handle(id, { type: "input_audio_buffer.speech_started", item_id: "first" });
+      service.channelReady(id);
+      service.channelReady(id);
+      expect(socket.sent.filter(e => e.type === "response.create")).toHaveLength(spoken ? 0 : 1);
+      if (!spoken) expect(JSON.stringify(socket.sent)).toContain("Buongiorno dal locale di prova.");
+    } finally { restaurant.channels.web = original; }
   });
   it("usa il vero harness per gli strumenti e deduplica le risposte", async () => {
     const { id } = await start();

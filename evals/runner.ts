@@ -8,7 +8,7 @@ import { BookingController } from "../src/lib/agent/booking";
 import { actionSchema } from "../src/lib/agent/harness";
 import { handoffPath } from "../src/lib/handoffs";
 import { Reservations } from "../src/lib/reservations";
-import { restaurant } from "../src/lib/restaurant";
+import { openingGreeting, restaurant } from "../src/lib/restaurant";
 import { controllerLine } from "../src/lib/voice/lines";
 import type { Conversation } from "./scenarios";
 
@@ -64,6 +64,8 @@ export async function runCase(s: Conversation, roles: Participants): Promise<Att
       if (row.table_id !== f.resource) throw new Error("FIXTURE_TABLE");
     }
     const before = archive.read();
+    const opening = openingGreeting(s.channel ?? "web");
+    if (opening) say(opening);
     let firstSummary = true;
     const history: unknown[] = [];
     // Some cases end when the customer hangs up after the last allowed exchange.
