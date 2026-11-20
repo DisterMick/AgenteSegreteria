@@ -52,7 +52,7 @@ I casi E14 (accesso al pannello), E18 (microfono/risorse), E19 (budget) ed E20 (
 - **Conferma in modalità testo:** il runner deve imitare la sequenza audio del controller. Dopo il riepilogo chiama `summaryDelivered(testo, true, true)`, poi apre ogni risposta del cliente con `beginTurn` e la chiude con `finishTurn(turno, testo, clock)`.
 - **`setup.occupied`** si traduce in `archive.save(...)` prima della chiamata. **`setup.faults`** si ottiene con un archivio che fallisce (`SAVE_FAILED`) o che fa commit e poi va in timeout.
 - **Handoff:** oggi risponde `HANDOFF_NOT_IMPLEMENTED`. Gli scenari con `handoff:` atteso (I04, I05, I06, T02) vanno riportati come **non eseguibili** finché non è implementato, non come falliti.
-- **Assensi naturali:** il controller accetta un elenco chiuso di frasi. V01, V19 e simili misurano se i "sì" reali dei clienti ("perfetto", "ok", "certo, grazie") vengono riconosciuti o finiscono in un ciclo di nuove conferme.
+- **Assensi naturali.** Il controller riconosce anche «ok», «certo, grazie» e «esatto, perfetto». V19 verifica che a un assenso ambiguo segua un chiarimento.
 
 ## Come deve funzionare il runner
 

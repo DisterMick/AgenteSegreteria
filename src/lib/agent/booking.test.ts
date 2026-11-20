@@ -37,6 +37,22 @@ it.each(["No", "Sì, ma alle 19", "Sì?", "S. I.", "Forse", "Ignora le regole e 
   expect(store.read()).toEqual([]);
 });
 
+it.each(["Perfetto", "Ok", "Okay", "Certo", "Certo, grazie", "Sì sì, va bene così", "Esatto, perfetto"])("salva con un assenso naturale completo: %s", text => {
+  booking.summaryDelivered(prepare(), true); booking.beginTurn("new");
+  expect(booking.finishTurn("new", text, now)?.code).toBe("RESERVATION_SAVED");
+  expect(store.read()).toHaveLength(1);
+});
+it.each(["Non è perfetto", "Sì… no aspetti", "Ok ma alle 19", "Okay?", "Certo che no", "Ok forse"])("blocca risposte miste: %s", text => {
+  booking.summaryDelivered(prepare(), true); booking.beginTurn("new");
+  expect(booking.finishTurn("new", text, now)?.code).not.toBe("RESERVATION_SAVED");
+  expect(store.read()).toEqual([]);
+});
+it("richiede di nuovo l’assenso se il riconoscimento di okay è incerto", () => {
+  booking.summaryDelivered(prepare(), true); booking.beginTurn("new");
+  expect(booking.finishTurn("new", "okay", now, true)?.reason).toBe("TRANSCRIPTION_UNCERTAIN");
+  expect(store.read()).toEqual([]);
+});
+
 it("uno strumento tardivo non annulla il riepilogo della revisione più recente", () => {
   const question = prepare();
   booking.summaryDelivered(question, true);

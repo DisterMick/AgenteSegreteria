@@ -32,6 +32,8 @@ Da implementare dopo gli strumenti reali, collegandoli a [COLLAUDO.md](COLLAUDO.
 
 Per ogni prova registrare input sintetico, versione del prompt/modello, tool call proposta, risultato della policy, stato prima/dopo, costo e motivazione dell'esito. Non pubblicare trascrizioni con dati reali.
 
+L’aggiunta di una forma di assenso richiede casi con negazioni, domande, correzioni e trascrizioni incerte.
+
 ## Regola per i merge futuri
 
 Nessuna nuova azione di scrittura entra nell'allowlist senza test di autorizzazione, conferma esplicita, retry, conflitto e stato database. Un test avversariale passato non dimostra assenza di vulnerabilità.

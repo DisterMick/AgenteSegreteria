@@ -8,6 +8,8 @@ La suite `src/lib/agent/harness.test.ts` copre una parte dei confini applicativi
 
 La CI valida il catalogo YAML con Zod e controlla gli ID anche tra file diversi. Il catalogo comprende 20 casi V e 31 casi di regole, guasti e canali.
 
+I test del controller coprono assenso colloquiale, risposte miste, correzioni e assenso trascritto con incertezza.
+
 ## Metodo
 
 Usare il dataset fittizio di [contratti e dati](CONTRATTI_E_DATI.md), fissare l'orologio nei test automatici e ripristinare lo stato tra casi indipendenti. Nessun test usa prenotazioni o audio di clienti reali.
