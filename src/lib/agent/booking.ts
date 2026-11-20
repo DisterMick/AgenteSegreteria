@@ -10,6 +10,7 @@ const affirmative = new Set([
   "si ti confermo", "confermo la prenotazione", "si confermo la prenotazione",
   "confermo tutto", "si confermo tutto", "va bene", "si va bene", "si va benissimo",
   "esatto", "si esatto", "si certo", "si perfetto", "si e corretto", "si e giusto",
+  "perfetto", "ok", "okay", "certo", "va bene cosi", "si va bene cosi", "si si va bene cosi", "esatto perfetto",
 ]);
 const negative = new Set(["no", "nograzie", "nonconfermo", "annulla", "lasciastare", "noannulla", "nolasciastare", "nonvoglioprenotare"]);
 function explicitAssent(transcript: string) {

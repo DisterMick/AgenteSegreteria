@@ -40,6 +40,8 @@ La bozza è mantenuta dal controller sulla base dei dati raccolti: `draft_id`, `
 
 ## Conferma e stato
 
+«Perfetto», «okay» e «certo, grazie» confermano soltanto nel nuovo turno associato a un riepilogo valido. La verifica considera l’intera risposta.
+
 Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → `confirmed`. Una correzione torna a `collecting`; un conflitto richiede nuove opzioni; un timeout di scrittura porta a `outcome_unknown` fino a riconciliazione.
 
 - Nome obbligatorio, non vuoto, massimo proposto di 80 caratteri; niente recapito obbligatorio nella demo.
