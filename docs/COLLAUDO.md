@@ -10,6 +10,8 @@ La CI valida il catalogo YAML con Zod e controlla gli ID anche tra file diversi.
 
 I test del controller coprono assenso colloquiale, risposte miste, correzioni e assenso trascritto con incertezza.
 
+`evals/handoff.test.ts` verifica I04–I06, le richieste ripetute dopo la riapertura, i tre campi registrati e il fallimento della scrittura.
+
 ## Metodo
 
 Usare il dataset fittizio di [contratti e dati](CONTRATTI_E_DATI.md), fissare l'orologio nei test automatici e ripristinare lo stato tra casi indipendenti. Nessun test usa prenotazioni o audio di clienti reali.

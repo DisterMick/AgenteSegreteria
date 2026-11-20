@@ -68,6 +68,13 @@ describe("sessione Realtime controllata dal server", () => {
     expect(JSON.stringify(socket.sent)).toContain("PUBLIC_INFO");
     expect(budget.read().observedUsd).toBeCloseTo(0.096);
   });
+  it("annuncia al cliente la registrazione della richiesta al personale", async () => {
+    const { id } = await start();
+    await service.handle(id, done("human", [{ type: "function_call", name: "restaurant_action", call_id: "c",
+      arguments: JSON.stringify({ action: { type: "request_human_handoff", expected_revision: 0, reason: "user_request" } }) }]));
+    expect(JSON.stringify(socket.sent)).toContain("HANDOFF_REQUESTED");
+    expect(JSON.stringify(socket.sent)).toContain("Ho registrato la richiesta per il personale");
+  });
   it("non esegue scritture proposte dal modello", async () => {
     const { id } = await start();
     await service.handle(id, done("one", [{ type: "function_call", name: "restaurant_action", call_id: "call_1", arguments: '{"action":{"type":"create_reservation","expected_revision":0,"confirmed":true}}' }]));

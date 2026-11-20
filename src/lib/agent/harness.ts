@@ -10,6 +10,8 @@ import { restaurant } from "../restaurant";
  * checks the proposal, owns the booking draft and never persists a reservation.
  * Never accept AgentSessionState from a browser in a production endpoint.
  */
+export const handoffReason = z.enum(["user_request", "not_understood", "allergen_question", "service_error"]);
+
 const timeSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 const revisionSchema = z.number().int().min(0);
 const partySizeSchema = z.number().int().min(1).max(restaurant.max_party_size);
@@ -43,10 +45,11 @@ export const actionSchema = z.discriminatedUnion("type", [
     expected_revision: revisionSchema,
     topic: z.enum(["hours", "menu", "allergens", "services"]),
   }),
+  z.strictObject({ type: z.literal("report_unclear_input"), expected_revision: revisionSchema }),
   z.strictObject({
     type: z.literal("request_human_handoff"),
     expected_revision: revisionSchema,
-    reason: z.enum(["user_request", "not_understood", "allergen_question", "service_error"]),
+    reason: handoffReason,
   }),
 ]);
 
@@ -190,7 +193,9 @@ export function processAgentProposal(
       return { status: "ok", code: "PUBLIC_INFO", state, data: { topic: action.topic, value: info[action.topic] } };
     }
 
+    case "report_unclear_input":
+      return { status: "ok", code: "CLARIFICATION_REQUIRED", state };
     case "request_human_handoff":
-      return blocked(state, "HANDOFF_NOT_IMPLEMENTED");
+      return { status: "ok", code: "HANDOFF_PROPOSED", state, data: { reason: action.reason } };
   }
 }

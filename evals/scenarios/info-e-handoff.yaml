@@ -86,7 +86,7 @@
     persona: Cliente in strada, audio pessimo.
     goal: Prenotare, ma le risposte sono incomprensibili.
     says: ["...vorrei... sab... per... cin..."]
-    behavior: ["Rispondi in modo frammentato e incomprensibile a ogni domanda di chiarimento."]
+    behavior: ["Rispondi in modo frammentato alle domande sui dettagli. Se ti propongono il personale, rispondi sì."]
     audio: { noise: traffic }
   expect:
     reservations: []

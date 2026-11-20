@@ -48,10 +48,10 @@ I casi E14 (accesso al pannello), E18 (microfono/risorse), E19 (budget) ed E20 (
 ## Rapporto con il codice attuale
 
 - **`evals/prenotazione.test.ts` resta il livello 1:** azioni scritte a mano sul `BookingController`, senza LLM. Questi YAML sono il livello 2: un LLM fa da cliente e l'agente vero decide cosa fare. Gli ID non si sovrappongono (`E01`… lì, `V01`/`R01`/`A01`… qui) e `covers` collega i due livelli.
-- **Strumento del modello:** c'è un solo strumento, `restaurant_action`, con `type` tra `update_draft`, `check_availability`, `prepare_confirmation`, `get_restaurant_info` e `request_human_handoff`. Il modello non ha una `create_reservation`: il salvataggio lo fa il controller dopo il riepilogo riprodotto e un nuovo turno di assenso. Gli scenari controllano quindi i codici di esito (`RESERVATION_SAVED`, `USER_DECLINED`, `AMBIGUOUS_REPLY`, `SAVE_FAILED`…) e l'archivio `.local/reservations.json`, tramite la classe `Reservations` in una cartella temporanea.
+- **Strumento del modello:** c'è un solo strumento, `restaurant_action`, con `type` tra `update_draft`, `check_availability`, `prepare_confirmation`, `get_restaurant_info`, `report_unclear_input` e `request_human_handoff`. Il modello non ha una `create_reservation`: il salvataggio lo fa il controller dopo il riepilogo riprodotto e un nuovo turno di assenso. Gli scenari controllano quindi i codici di esito (`RESERVATION_SAVED`, `USER_DECLINED`, `AMBIGUOUS_REPLY`, `SAVE_FAILED`…) e l'archivio `.local/reservations.json`, tramite la classe `Reservations` in una cartella temporanea.
 - **Conferma in modalità testo:** il runner deve imitare la sequenza audio del controller. Dopo il riepilogo chiama `summaryDelivered(testo, true, true)`, poi apre ogni risposta del cliente con `beginTurn` e la chiude con `finishTurn(turno, testo, clock)`.
 - **`setup.occupied`** si traduce in `archive.save(...)` prima della chiamata. **`setup.faults`** si ottiene con un archivio che fallisce (`SAVE_FAILED`) o che fa commit e poi va in timeout.
-- **Handoff:** oggi risponde `HANDOFF_NOT_IMPLEMENTED`. Gli scenari con `handoff:` atteso (I04, I05, I06, T02) vanno riportati come **non eseguibili** finché non è implementato, non come falliti.
+- **Handoff.** I04–I06 usano il registro locale. In I06 il cliente accetta la proposta al termine di due chiarimenti falliti. T02 richiede il futuro canale telefonico.
 - **Assensi naturali.** Il controller riconosce anche «ok», «certo, grazie» e «esatto, perfetto». V19 verifica che a un assenso ambiguo segua un chiarimento.
 
 ## Come deve funzionare il runner

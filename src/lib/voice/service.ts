@@ -33,6 +33,14 @@ type Runtime = {
   pendingTurn: { id: string; text: string; timer: ReturnType<typeof setTimeout> } | null;
 };
 
+function handoffLine(code: string) {
+  switch (code) {
+    case "HANDOFF_REQUESTED": return "Ho registrato la richiesta per il personale.";
+    case "HANDOFF_FAILED": return "Non sono riuscita a registrare la richiesta per il personale.";
+    case "HANDOFF_OFFERED": case "VOICE_CONFIRMATION_FAILED": return "Non ho prenotato il tavolo. Vuoi che registri una richiesta per il personale?";
+    case "CLARIFICATION_REQUIRED": return "Non ho capito bene. Puoi ripetere l’ultimo dettaglio?";
+  }
+}
 export class RealtimeVoice {
   private current: Runtime | null = null;
 
@@ -270,6 +278,7 @@ export class RealtimeVoice {
         const args = toolArgumentsSchema.parse(JSON.parse(item.arguments));
         result = runtime.booking.act(args.action);
       } catch (error) { result = { status: "blocked", code: error instanceof z.ZodError || error instanceof SyntaxError ? "INVALID_OR_UNAUTHORIZED_ACTION" : "ACTION_FAILED", state: runtime.booking.state }; }
+      runtime.nextLine = handoffLine(result.code) ?? runtime.nextLine;
       this.log(runtime, { event: "tool", code: result.code });
       runtime.socket?.send(JSON.stringify({ type: "conversation.item.create", item: { type: "function_call_output", call_id: item.call_id, output: JSON.stringify(result) } }));
       tools++;
@@ -291,7 +300,7 @@ export class RealtimeVoice {
     }
     if (result.code === "RESERVATION_SAVED" && result.reservation) runtime.nextLine = `Prenotazione confermata. Il tuo codice è ${result.reservation.code}. A presto!`;
     if (result.code === "USER_DECLINED") runtime.nextLine = "Va bene, nessuna prenotazione. Buona giornata!";
-    if (result.code === "VOICE_CONFIRMATION_FAILED") runtime.nextLine = "Non sono riuscita a verificare la conferma. Il tavolo non è stato prenotato.";
+    runtime.nextLine = handoffLine(result.code) ?? runtime.nextLine;
     if (result.code === "SAVE_FAILED") runtime.nextLine = "Non riesco a verificare il salvataggio. Rivolgiti al personale prima di riprovare.";
     const clarification = runtime.uncertainInput && result.code === "NOT_SAVED" ? " Alcune parole sono incerte. Chiedi di ripetere solo il dettaglio che non hai capito." : "";
     runtime.socket?.send(JSON.stringify({ type: "conversation.item.create", item: { type: "message", role: "system", content: [{ type: "input_text", text: `Esito del controller (dati): ${JSON.stringify({ code: result.code, reason: result.reason, revision: runtime.booking.state.revision })}.${clarification}` }] } }));
