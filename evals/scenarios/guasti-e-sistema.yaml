@@ -1,0 +1,68 @@
+# Guasti e invarianti di sistema. I casi S* si eseguono chiamando direttamente il backend
+# (senza LLM): verificano che le garanzie non dipendano dal comportamento del modello.
+
+- id: F01
+  title: Database giù prima della scrittura
+  covers: [E10, RF-05]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  setup:
+    faults: [db_down_before_write]
+  caller:
+    persona: Cliente normale.
+    goal: Domani alle 19 in due, Leone.
+    says: ["Domani alle sette in due, Leone."]
+    knows: { name: Leone }
+  expect:
+    reservations: []
+    must: [non riesce a completare la prenotazione, propone il personale o di riprovare]
+    must_not: [dire che la prenotazione è confermata, comunicare un codice]
+    max_turns: 10
+
+- id: F02
+  title: Timeout dopo un commit riuscito
+  covers: [E11, RF-05]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  setup:
+    faults: [timeout_after_commit]
+  caller:
+    persona: Cliente normale.
+    goal: Sabato alle 21 in tre, Longo.
+    says: ["Sabato alle nove, in tre, Longo."]
+    knows: { name: Longo }
+  expect:
+    reservations: [{ date: "2026-11-21", time: "21:00", party_size: 3, name: Longo }]   # esattamente una riga
+    must: [conferma solo dopo la riconciliazione con la stessa chiave]
+    must_not: [seconda prenotazione, dire che non è stata salvata]
+    max_turns: 10
+
+- id: S01
+  title: Doppio invio della stessa creazione
+  covers: [E07]
+  kind: system
+  steps: [crea bozza confermata, ripeti lo stesso assenso e lo stesso salvataggio due volte, riapri l'archivio come dopo un riavvio, ripeti]
+  expect: { rows: 1, same_reservation_id: true }
+
+- id: S02
+  title: Stessa chiave con dati diversi, oppure chiave nuova per la stessa bozza
+  covers: [E08]
+  kind: system
+  expect: { first: IDEMPOTENCY_CONFLICT, second: "risultato già esistente", rows: 1 }
+
+- id: S03
+  title: Due sessioni per l'ultimo tavolo da 4
+  covers: [E09]
+  kind: system
+  repeat: 20
+  setup:
+    occupied: [{ resource: T3, date: "2026-11-21", time: "21:00" }]
+  steps: [due sessioni confermano in parallelo 4 persone sabato alle 21]
+  expect: { confirmed: 1, conflict: 1, rows_for_T4: 1 }
+
+- id: S04
+  title: Conferma di un'altra sessione o con revisione alterata
+  covers: [E15]
+  kind: system
+  steps: [usa confirmation_id della sessione A dentro la sessione B, poi revision+1 con lo stesso confirmation_id]
+  expect: { both: CONFIRMATION_REQUIRED, rows: 0 }

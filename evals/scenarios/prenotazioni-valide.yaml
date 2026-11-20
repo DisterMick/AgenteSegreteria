@@ -1,0 +1,344 @@
+# 20 prenotazioni che devono riuscire. Denominatore della metrica "prenotazioni corrette" (soglia 95%).
+# Clock comune: mercoledì 18/11/2026 ore 16:00, Europe/Rome. Locale: pizzeria-demo.
+# Tavoli T1,T2 da 2; T3,T4 da 4. Turni 19:00 e 21:00. Lunedì chiuso. Max 4 persone.
+
+- id: V01
+  title: Richiesta completa in una frase
+  tags: [base]
+  covers: [E01, RF-03, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo sui 40, sbrigativo, frasi corte.
+    goal: Tavolo per due domani alle 19, a nome Rossi.
+    says: ["Buonasera, vorrei prenotare per domani sera alle sette, siamo in due, a nome Rossi."]
+    knows: { name: Rossi }
+    behavior: ["Conferma con 'sì, perfetto' se il riepilogo è corretto."]
+  expect:
+    reservations: [{ date: "2026-11-19", time: "19:00", party_size: 2, name: Rossi }]
+    must: [riepilogo con data completa giovedì 19 novembre, ore 19, 2 persone, Rossi, codice di prenotazione dopo il salvataggio]
+    must_not: [chiedere di nuovo dati già forniti, comunicare il codice prima dell'esito dello strumento]
+    max_turns: 8
+
+- id: V02
+  title: Dati forniti a pezzi
+  tags: [raccolta]
+  covers: [E01, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Ragazza giovane, risponde solo a ciò che le viene chiesto.
+    goal: Tavolo per tre sabato alle 21, nome Bianchi.
+    says: ["Ciao, volevo prenotare un tavolo."]
+    knows: { day: sabato, time: "alle nove", people: 3, name: Bianchi }
+    behavior: ["Fornisci un'informazione per volta, solo quando richiesta."]
+  expect:
+    reservations: [{ date: "2026-11-21", time: "21:00", party_size: 3, name: Bianchi }]
+    must: ["chiede uno alla volta giorno, orario, persone e nome"]
+    max_turns: 12
+
+- id: V03
+  title: Stasera, turno ancora disponibile
+  tags: [date-relative]
+  covers: [E01, E03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signore di mezza età, cordiale.
+    goal: Stasera alle 21 in quattro, nome Greco.
+    says: ["Avete posto stasera alle nove per quattro persone?"]
+    knows: { name: Greco }
+  expect:
+    reservations: [{ date: "2026-11-18", time: "21:00", party_size: 4, name: Greco }]
+    must: ["nel riepilogo dice: stasera, mercoledì 18 novembre"]
+    max_turns: 8
+
+- id: V04
+  title: Orario fuori turno, sceglie tra le opzioni
+  tags: [turni]
+  covers: [E03, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora, vaga sugli orari.
+    goal: Venerdì "verso le otto" in due; accetta le 19.
+    says: ["Per venerdì sera, verso le otto, in due."]
+    knows: { name: Ferraro }
+    behavior: ["Quando ti propongono 19 o 21, scegli le 19."]
+  expect:
+    reservations: [{ date: "2026-11-20", time: "19:00", party_size: 2, name: Ferraro }]
+    must: [spiega che i turni sono alle 19 e alle 21]
+    must_not: [prenotare alle 20, inventare un turno delle 20]
+    max_turns: 10
+
+- id: V05
+  title: Persone espresse in modo indiretto
+  tags: [numeri]
+  covers: [E01, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Papà, parla della famiglia.
+    goal: Domenica alle 19 per la famiglia, nome Russo.
+    says: ["Domenica alle sette, saremmo io, mia moglie e i due bambini."]
+    knows: { name: Russo }
+  expect:
+    reservations: [{ date: "2026-11-22", time: "19:00", party_size: 4, name: Russo }]
+    must: [conferma esplicitamente "quattro persone" nel riepilogo]
+    max_turns: 8
+
+- id: V06
+  title: Data numerica senza mese
+  tags: [date]
+  covers: [E03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo pratico.
+    goal: Il 27 alle 21 in due, nome Marino.
+    says: ["Per il 27 alle 21, due persone."]
+    knows: { name: Marino }
+  expect:
+    reservations: [{ date: "2026-11-27", time: "21:00", party_size: 2, name: Marino }]
+    must: [riepiloga "venerdì 27 novembre"]
+    max_turns: 8
+
+- id: V07
+  title: "'Venerdì prossimo' ambiguo"
+  tags: [date, ambiguità]
+  covers: [E03, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora precisa.
+    goal: Intende venerdì 27, non il 20.
+    says: ["Vorrei prenotare venerdì prossimo alle 19, in tre."]
+    knows: { name: Colombo, which_friday: "quello della settimana dopo, il 27" }
+    behavior: ["Se l'agente propone il 20 senza chiedere, correggilo: intendevi il 27."]
+  expect:
+    reservations: [{ date: "2026-11-27", time: "19:00", party_size: 3, name: Colombo }]
+    must: [chiede se intende il 20 o il 27, oppure riepiloga la data completa e accetta la correzione]
+    max_turns: 10
+
+- id: V08
+  title: Correzione delle persone dopo il riepilogo
+  tags: [correzione, revisione]
+  covers: [E05, RF-01, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Ragazzo, cambia idea.
+    goal: Partito da 2, alla fine sono 4. Sabato alle 21, nome Gallo.
+    says: ["Sabato alle 21 per due, a nome Gallo."]
+    knows: { name: Gallo }
+    behavior: ["Dopo il primo riepilogo, invece di confermare, di': 'Ah no aspetta, vengono anche due amici, siamo in quattro.' Poi conferma il nuovo riepilogo."]
+  expect:
+    reservations: [{ date: "2026-11-21", time: "21:00", party_size: 4, name: Gallo }]
+    must: [nuova verifica di disponibilità per 4, nuovo riepilogo prima della conferma]
+    must_not: [salvare la prenotazione da 2]
+    max_turns: 12
+
+- id: V09
+  title: Cambio giorno mentre arriva la disponibilità
+  tags: [correzione, revisione]
+  covers: [E05]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora che ci ripensa subito.
+    goal: Prima giovedì, poi venerdì. Alle 19, in due, nome Conti.
+    says: ["Giovedì alle sette in due... anzi no, meglio venerdì."]
+    knows: { name: Conti }
+  expect:
+    reservations: [{ date: "2026-11-20", time: "19:00", party_size: 2, name: Conti }]
+    must_not: [usare l'esito di disponibilità di giovedì, riepilogare giovedì]
+    max_turns: 10
+
+- id: V10
+  title: Cognome difficile, compitato
+  tags: [nomi]
+  covers: [E01, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo con cognome straniero, abituato a compitarlo.
+    goal: Domani alle 21 in due, nome Kowalczyk.
+    says: ["Domani alle nove di sera, per due. Il cognome è Kowalczyk."]
+    knows: { name: Kowalczyk, spelling: "K O W A L C Z Y K" }
+    behavior: ["Se l'agente sbaglia la grafia, compitala lettera per lettera."]
+  expect:
+    reservations: [{ date: "2026-11-19", time: "21:00", party_size: 2, name: Kowalczyk }]
+    must: [chiede o conferma la grafia del cognome]
+    max_turns: 10
+
+- id: V11
+  title: Nome italiano facile da fraintendere
+  tags: [nomi]
+  covers: [E01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signore anziano.
+    goal: Domenica alle 19 in due, nome De Luca (non "Deluca").
+    says: ["Domenica alle sette per due, De Luca."]
+    knows: { name: "De Luca", spelling: "De Luca, staccato, D maiuscola" }
+  expect:
+    reservations: [{ date: "2026-11-22", time: "19:00", party_size: 2, name: "De Luca" }]
+    max_turns: 10
+
+- id: V12
+  title: Cliente che divaga
+  tags: [conversazione]
+  covers: [E01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora chiacchierona, racconta del compleanno della figlia.
+    goal: Sabato alle 19 in quattro, nome Fontana.
+    says: ["Buonasera! Allora, sabato è il compleanno di mia figlia, compie diciotto anni, e volevamo festeggiare in modo semplice, una pizza, siamo noi quattro..."]
+    knows: { name: Fontana }
+    behavior: ["Aggiungi un paio di divagazioni, ma rispondi alle domande."]
+  expect:
+    reservations: [{ date: "2026-11-21", time: "19:00", party_size: 4, name: Fontana }]
+    must: [riporta gentilmente la conversazione sulla prenotazione]
+    must_not: [promettere torte, decorazioni o servizi non presenti nei dati]
+    max_turns: 14
+
+- id: V13
+  title: Cliente anziano lento che chiede di ripetere
+  tags: [accessibilità]
+  covers: [E01, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signore di 80 anni, parla piano, sente poco.
+    goal: Giovedì alle 19 in due, nome Esposito.
+    says: ["Pronto? Volevo... un tavolo. Per giovedì."]
+    knows: { time: "alle sette", people: 2, name: Esposito }
+    behavior: ["Una volta chiedi 'come ha detto?' dopo il riepilogo, poi conferma."]
+    audio: { pace: slow }
+  expect:
+    reservations: [{ date: "2026-11-19", time: "19:00", party_size: 2, name: Esposito }]
+    must: [ripete il riepilogo con calma quando richiesto]
+    max_turns: 14
+
+- id: V14
+  title: Interruzione durante il riepilogo per cambiare orario
+  tags: [barge-in, correzione]
+  covers: [E05, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo impaziente.
+    goal: Venerdì in due, prima alle 19 poi alle 21, nome Rizzo.
+    says: ["Venerdì alle sette, due persone, Rizzo."]
+    knows: { name: Rizzo }
+    behavior: ["Interrompi l'agente a metà riepilogo: 'No scusi, facciamo alle nove.'"]
+  expect:
+    reservations: [{ date: "2026-11-20", time: "21:00", party_size: 2, name: Rizzo }]
+    must: [nuovo riepilogo con le 21 prima di salvare]
+    max_turns: 10
+
+- id: V15
+  title: Prima domanda sugli allergeni, poi prenotazione
+  tags: [info, prenotazione]
+  covers: [E01, RF-02]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Mamma attenta.
+    goal: Sapere se la marinara ha latte, poi prenotare domani alle 19 in tre, nome Moretti.
+    says: ["La pizza marinara contiene latte?"]
+    knows: { name: Moretti }
+  expect:
+    reservations: [{ date: "2026-11-19", time: "19:00", party_size: 3, name: Moretti }]
+    must: [secondo il menu la marinara ha solo grano tra gli allergeni, avverte che non si esclude contaminazione]
+    max_turns: 12
+
+- id: V16
+  title: Italiano regionale
+  tags: [accento]
+  covers: [E01, RF-01]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo siciliano, italiano regionale marcato.
+    goal: Sabato alle 21 in tre, nome Messina.
+    says: ["Salutamu! Sabbatu sira, i novi, semu in tri. A nomu Missina."]
+    knows: { name: Messina }
+    audio: { accent: siciliano }
+  expect:
+    reservations: [{ date: "2026-11-21", time: "21:00", party_size: 3, name: Messina }]
+    must: [verifica il nome se incerto]
+    max_turns: 12
+
+- id: V17
+  title: Resta solo l'ultimo tavolo da 4
+  tags: [disponibilità]
+  covers: [E01, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  setup:
+    occupied: [{ resource: T3, date: "2026-11-21", time: "21:00" }]
+  caller:
+    persona: Ragazza.
+    goal: Sabato alle 21 in quattro, nome Lombardi.
+    says: ["Sabato alle nove in quattro, c'è posto?"]
+    knows: { name: Lombardi }
+  expect:
+    reservations:
+      - { date: "2026-11-21", time: "21:00", party_size: 4, name: Lombardi }   # su T4; T3 resta della prenotazione esistente
+    max_turns: 8
+
+- id: V18
+  title: Turno pieno, accetta l'alternativa
+  tags: [disponibilità, alternative]
+  covers: [E06, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  setup:
+    occupied:
+      - { resource: T3, date: "2026-11-21", time: "21:00" }
+      - { resource: T4, date: "2026-11-21", time: "21:00" }
+  caller:
+    persona: Uomo flessibile.
+    goal: Sabato alle 21 in tre; accetta le 19 se proposte.
+    says: ["Sabato alle nove, in tre."]
+    knows: { name: Barbieri }
+  expect:
+    reservations: [{ date: "2026-11-21", time: "19:00", party_size: 3, name: Barbieri }]
+    must: [dice che alle 21 non c'è posto, propone le 19 sulla base dei dati]
+    must_not: [proporre tavoli da 2 uniti]
+    max_turns: 10
+
+- id: V19
+  title: Conferma ambigua, l'agente richiede
+  tags: [conferma]
+  covers: [E01, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora indecisa.
+    goal: Domenica alle 21 in due, nome Caruso.
+    says: ["Domenica alle nove in due, Caruso."]
+    knows: { name: Caruso }
+    behavior: ["Al primo riepilogo rispondi 'mmh sì, cioè, va bene... credo'. Alla seconda domanda conferma chiaramente."]
+  expect:
+    reservations: [{ date: "2026-11-22", time: "21:00", party_size: 2, name: Caruso }]
+    must: [chiede una conferma chiara dopo la risposta ambigua]
+    max_turns: 10
+
+- id: V20
+  title: Prenotazione per una persona, al limite dell'orizzonte
+  tags: [limiti]
+  covers: [E01, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Uomo d'affari.
+    goal: Venerdì 18 dicembre alle 21, da solo, nome Ricci.
+    says: ["Vorrei prenotare per venerdì 18 dicembre alle 21, sono solo io."]
+    knows: { name: Ricci }
+  expect:
+    reservations: [{ date: "2026-12-18", time: "21:00", party_size: 1, name: Ricci }]
+    max_turns: 8

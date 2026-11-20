@@ -21,6 +21,7 @@ Il modello interpreta la conversazione; il backend applica i permessi e le regol
 | [Contratti e dati](docs/CONTRATTI_E_DATI.md) | Strumenti dell'agente, stato della prenotazione e dati demo |
 | [Sicurezza e privacy](docs/SICUREZZA_E_PRIVACY.md) | Confini di fiducia, accessi, dati personali e costi |
 | [Collaudo](docs/COLLAUDO.md) | Casi normali, errori, attacchi e metriche |
+| [Voce e telefonia](docs/VOCE_E_TELEFONIA.md) | Confronto dei canali e preparazione della fase D |
 | [Piano di sviluppo](docs/PIANO_DI_SVILUPPO.md) | Fasi, dipendenze e condizioni per avanzare |
 | [Voce Realtime](docs/VOCE_REALTIME.md) | Configurazione, limiti effettivi, costi e recupero |
 

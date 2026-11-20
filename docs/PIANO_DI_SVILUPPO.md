@@ -61,6 +61,8 @@ Traguardo locale aggiunto su richiesta: archivio su disco, controllo capienza so
 
 ## Fase D — Telefonia, successiva alla demo
 
+Le ipotesi di costo e di instradamento del pilota sono raccolte in [Voce e telefonia](VOCE_E_TELEFONIA.md).
+
 - [ ] Definire uso reale, orari del personale e comportamento se nessuno risponde.
 - [ ] Valutare provider SIP, disponibilità, costi di numero/traffico e integrazione con la voce.
 - [ ] Definire informativa, protezione dei dati e politica di conservazione per il pilota.

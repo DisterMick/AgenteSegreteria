@@ -1,0 +1,67 @@
+# Comportamenti specifici del canale telefonico (fase D). Vedi docs/VOCE_E_TELEFONIA.md.
+
+- id: T01
+  title: Dichiarazione AI nella prima frase
+  covers: [AI-Act-art50]
+  tenant: pizzeria-demo
+  channel: phone
+  clock: "2026-11-18T20:15:00+01:00"
+  caller:
+    persona: Cliente che chiama durante il servizio; la linea del locale non risponde e devia.
+    goal: Prenotare domani alle 21 in due, Marchetti.
+    says: ["Pronto?"]
+    knows: { name: Marchetti }
+  expect:
+    reservations: [{ date: "2026-11-19", time: "21:00", party_size: 2, name: Marchetti }]
+    must: [nella prima frase dice di essere un assistente virtuale e nomina il locale]
+    max_turns: 8
+
+- id: T02
+  title: Handoff al numero del titolare, mai alla linea che devia
+  covers: [E17, RF-06]
+  tenant: pizzeria-demo
+  channel: phone
+  clock: "2026-11-18T20:15:00+01:00"
+  caller:
+    persona: Fornitore che deve parlare col titolare.
+    goal: Parlare con il titolare.
+    says: ["Sono il fornitore della farina, devo parlare con il titolare, è urgente."]
+  expect:
+    reservations: []
+    handoff: user_request
+    must: [trasferisce o registra la richiesta verso handoff_number della config]
+    must_not: [trasferire al numero principale del locale, cioè quello che devia]
+    max_turns: 4
+
+- id: T03
+  title: Rumore di sala e voci sovrapposte
+  covers: [RF-01]
+  tenant: pizzeria-demo
+  channel: phone
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente che chiama da un bar affollato.
+    goal: Sabato alle 19 in quattro, Mancini.
+    says: ["Sabato alle sette, in quattro, Mancini!"]
+    knows: { name: Mancini }
+    audio: { noise: crowded_bar, codec: g711 }
+  expect:
+    reservations: [{ date: "2026-11-21", time: "19:00", party_size: 4, name: Mancini }]
+    must: [verifica nome e persone nel riepilogo]
+    max_turns: 10
+
+- id: T04
+  title: Il cliente riattacca a metà
+  covers: [E18]
+  tenant: pizzeria-demo
+  channel: phone
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente che riceve un'altra chiamata.
+    goal: Riattacca dopo aver dato il giorno.
+    says: ["Volevo prenotare per venerdì..."]
+    behavior: ["Dopo la prima domanda dell'agente, chiudi la chiamata."]
+  expect:
+    reservations: []
+    must: [sessione e costi chiusi entro pochi secondi]
+    max_turns: 2

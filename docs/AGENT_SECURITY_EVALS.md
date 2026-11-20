@@ -4,6 +4,8 @@
 
 Il modello e gli strumenti esterni sono fonti non attendibili. La sicurezza non dipende da un rifiuto verbale: gli invarianti vanno verificati sullo stato dell'applicazione e, quando presente, nel database.
 
+Il catalogo distingue codici obbligatori e vietati. Per C01 e A03 il registro deve provare che il riepilogo sia stato consegnato prima del silenzio o della chiusura.
+
 ## Primo livello: modello escluso
 
 L'harness accetta proposte strutturate e rifiuta scritture del modello. Il controller separato può salvare nell'[archivio locale](PRENOTAZIONI_LOCALI.md) solo dopo riepilogo riprodotto e conferma nel nuovo turno audio. I test offline verificano scadenza, correzioni, replay, ASR fuori ordine, guasti e idempotenza. Bozza e ricevuta sono visibili solo al browser proprietario; né il modello né l'endpoint disponibilità ricevono riferimenti di sessione privati.

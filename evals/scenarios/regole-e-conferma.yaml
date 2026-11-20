@@ -1,0 +1,149 @@
+# Richieste da respingere e conferme che non arrivano. In tutti: nessuna prenotazione salvata,
+# salvo dove indicato. NON entrano nel denominatore delle prenotazioni valide.
+
+- id: R01
+  title: Lunedì chiuso
+  covers: [E04, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Ragazzo.
+    goal: Lunedì alle 21 in due; se chiuso, chiude la chiamata.
+    says: ["Lunedì sera alle nove, in due."]
+    behavior: ["Se il lunedì è chiuso, ringrazia e saluta."]
+  expect:
+    reservations: []
+    must: [il lunedì il locale è chiuso, propone un altro giorno]
+    max_turns: 6
+
+- id: R02
+  title: Gruppo oltre il limite
+  covers: [E04, RF-03, RF-06]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Organizzatrice di una cena di classe.
+    goal: Sabato alle 21 per sei persone.
+    says: ["Sabato alle nove, siamo in sei."]
+    behavior: ["Chiedi se si possono unire due tavoli."]
+  expect:
+    reservations: []
+    handoff: null   # accettabile anche user_request se il cliente lo chiede
+    must: [massimo 4 persone per prenotazione, tavoli non unibili, offre di far richiamare dal personale oppure saluta]
+    must_not: [dividere in due prenotazioni da 3, promettere tavoli uniti]
+    max_turns: 8
+
+- id: R03
+  title: Data oltre i 30 giorni
+  covers: [E04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Signora previdente.
+    goal: Cenone del 31 dicembre in quattro.
+    says: ["Vorrei prenotare per il 31 dicembre, quattro persone."]
+  expect:
+    reservations: []
+    must: [si prenota fino a 30 giorni, cioè fino al 18 dicembre]
+    max_turns: 6
+
+- id: R04
+  title: Turno già iniziato
+  covers: [E04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T19:30:00+01:00"
+  caller:
+    persona: Uomo affamato, chiama alle 19:30.
+    goal: Subito, alle 19, in due; accetta le 21.
+    says: ["Avete posto adesso, per il turno delle sette?"]
+    knows: { name: Galli }
+    behavior: ["Accetta le 21 se proposte."]
+  expect:
+    reservations: [{ date: "2026-11-18", time: "21:00", party_size: 2, name: Galli }]
+    must: [il turno delle 19 è già iniziato]
+    max_turns: 10
+
+- id: R05
+  title: Nessuna disponibilità
+  covers: [E06, RF-03]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  setup:
+    occupied:
+      - { resource: T3, date: "2026-11-21", time: "19:00" }
+      - { resource: T4, date: "2026-11-21", time: "19:00" }
+      - { resource: T3, date: "2026-11-21", time: "21:00" }
+      - { resource: T4, date: "2026-11-21", time: "21:00" }
+  caller:
+    persona: Uomo che vuole solo sabato.
+    goal: Sabato in quattro, qualsiasi turno; non accetta altri giorni.
+    says: ["Sabato sera in quattro, qualsiasi orario."]
+    behavior: ["Rifiuta altri giorni."]
+  expect:
+    reservations: []
+    must: [sabato è pieno per 4 persone, propone altri giorni in base ai dati]
+    must_not: [confermare o promettere una lista d'attesa inesistente]
+    max_turns: 8
+
+- id: C01
+  title: Riepilogo seguito da silenzio
+  covers: [E02, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente distratto.
+    goal: Fornisce i dati e poi non risponde più.
+    says: ["Domani alle sette, due persone, Neri."]
+    behavior: ["Dopo il riepilogo resta in silenzio fino alla fine (il runner simula il timeout)."]
+  expect:
+    events_must: [SUMMARY_READY]
+    reservations: []
+    events_must_not: [RESERVATION_SAVED]
+    must: [richiede la conferma almeno una volta, chiude senza dichiarare la prenotazione fatta]
+    max_turns: 8
+
+- id: C02
+  title: Il cliente ci ripensa
+  covers: [E02]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Ragazza indecisa.
+    goal: Al riepilogo dice che deve sentire gli amici.
+    says: ["Sabato alle nove in tre, Villa."]
+    behavior: ["Al riepilogo: 'No aspetti, devo sentire gli altri, la richiamo.'"]
+  expect:
+    reservations: []
+    events_must_not: [RESERVATION_SAVED]
+    max_turns: 8
+
+- id: C03
+  title: Riaggancia prima di confermare
+  covers: [E02, E18]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente con linea instabile.
+    goal: La chiamata cade dopo il riepilogo.
+    says: ["Venerdì alle 21, quattro persone, Costa."]
+    behavior: ["Dopo il riepilogo la chiamata si interrompe (il runner chiude la sessione)."]
+  expect:
+    reservations: []
+    must_not: [bozza ancora confermabile dopo la chiusura della sessione]
+    max_turns: 6
+
+- id: C04
+  title: "Conferma dopo la scadenza (più di 2 minuti)"
+  covers: [E15, RF-04]
+  tenant: pizzeria-demo
+  clock: "2026-11-18T16:00:00+01:00"
+  caller:
+    persona: Cliente che si allontana dal telefono.
+    goal: Dopo il riepilogo passa 3 minuti, poi dice "sì".
+    says: ["Domenica alle sette, due, Sala."]
+    knows: { name: Sala }
+    behavior: ["Dopo il riepilogo il runner avanza l'orologio di 3 minuti; poi di' 'sì, confermo'. Conferma anche il secondo riepilogo."]
+  expect:
+    reservations: [{ date: "2026-11-22", time: "19:00", party_size: 2, name: Sala }]
+    must: [riverifica e ripete il riepilogo prima di salvare]
+    max_turns: 12
