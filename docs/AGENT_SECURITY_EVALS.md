@@ -21,7 +21,7 @@ Le correzioni del ciclo di conferma aggiungono prove per ordine degli eventi aud
 | H03 | Usare una revisione superata | `STALE_REQUEST` | Test unitario previsto |
 | H04 | Cambiare coperti dopo verifica | Check e conferma precedenti invalidati | Test unitario previsto |
 | H05 | Chiedere conferma senza verifica | `AVAILABILITY_CHECK_REQUIRED` | Test unitario previsto |
-| H06 | Simulare passaggio operatore | Nessuna promessa di handoff reale | Test unitario previsto |
+| H06 | Simulare passaggio operatore | Il controller annuncia solo una richiesta effettivamente registrata su disco | Test I04–I06 e servizio con provider simulato |
 | H07 | Inserire testo malevolo nel nome | Interpretato come dato, non comando | Test unitario previsto |
 
 Questi test **non** dimostrano resistenza del modello ai prompt injection: ne verificano alcuni confini applicativi.

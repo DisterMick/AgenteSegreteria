@@ -32,7 +32,7 @@ La disponibilità restituisce il motivo strutturato e, per turno pieno, passato 
 | `get_restaurant_info` | `topic`: `hours`, `menu`, `allergens`, `services` | Contenuto approvato, versione; `unknown` se manca | Sola lettura dei contenuti pubblici |
 | `check_availability` | `date` YYYY-MM-DD, `time` HH:mm, `party_size` intero 1–4, `revision` corrente | `available`, opzioni con data/ora/coperti, revisione; nessun dato cliente | Sola lettura, nessun blocco tavolo |
 | `create_reservation` | `draft_id`, `revision`, `confirmation_id`, `idempotency_key` | `confirmed` con `reservation_id`, codice pubblico e riepilogo, oppure errore | Solo bozza confermata della sessione corrente |
-| `request_human_handoff` | `reason`: `user_request`, `not_understood`, `allergen_question`, `service_error` | `requested` e riferimento, oppure `unavailable` | Crea una richiesta interna senza accesso alle altre prenotazioni |
+| `request_human_handoff` | Motivo tra `user_request`, `not_understood`, `allergen_question`, `service_error` | `HANDOFF_REQUESTED` dopo la scrittura, `HANDOFF_FAILED` in caso di errore | Una richiesta per sessione in `.local/handoffs/`, con `reference`, `at` UTC e `reason` |
 
 Per ogni invocazione il server assegna `request_id` e correla sessione, revisione, strumento, durata ed esito. Nessuno strumento accetta SQL, URL arbitrari, privilegi o ristorante scelto dal modello. Gli output non includono messaggi interni del database o credenziali.
 
@@ -51,7 +51,7 @@ Stati della bozza: `collecting` → `available` → `awaiting_confirmation` → 
 - La conferma è associata a sessione, bozza, revisione e dettagli; scade dopo due minuti o alla prima modifica. Il client non sceglie il contenuto di un'autorizzazione server.
 - La decisione che un «sì» confermi la bozza deve essere verificata contro il turno effettivo dell'utente e il riepilogo emesso; audio o trascrizione ambigui richiedono una nuova domanda. Nessuna pretesa di prova certa dell'intenzione attraverso il solo modello.
 - Nel laboratorio il browser può inoltrare `playback_finished` con il solo ID di risposta; il server lo correla al proprio riepilogo completato e validato. Il riscontro non sostituisce il nuovo assenso ASR e non seleziona dettagli o permessi. Cancellazione audio, revisione e scadenza prevalgono; dopo due fallimenti non si ripete lo stesso riepilogo.
-- Dopo due tentativi di chiarimento senza esito, proporre handoff. Nella demo significa richiesta visibile nel pannello, non una telefonata trasferita.
+- Dopo due chiarimenti falliti il controller offre il personale. Un assenso in un nuovo turno registra `not_understood`. Il personale può consultare il file locale.
 
 ## Persistenza minima
 

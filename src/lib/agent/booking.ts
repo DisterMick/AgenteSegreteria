@@ -1,5 +1,6 @@
-import { actionSchema, createAgentSessionState, processAgentProposal, type BookingDraft } from "./harness";
+import { actionSchema, handoffReason, createAgentSessionState, processAgentProposal, type BookingDraft } from "./harness";
 import type { Reservations, Reservation } from "../reservations";
+import { handoffPath, registerHandoff, type Handoff } from "../handoffs";
 
 const normalized = (text: string) => text.toLocaleLowerCase("it").normalize("NFD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]/gu, "");
 const summaryKey = (text: string) => text.toLocaleLowerCase("it").normalize("NFD").replace(/\p{M}/gu, "")
@@ -62,7 +63,33 @@ export class BookingController {
   private failures = 0;
   private correctionRevision: number | null = null;
 
-  constructor(private sessionId: string, private store: Pick<Reservations, "read" | "save">) {}
+  handoff: Handoff | null = null;
+  private offer = false;
+  private turnCount = 0;
+  private unclearTurns = 0;
+  private lastUnclearTurn = -2;
+
+  constructor(private sessionId: string, private store: Pick<Reservations, "path" | "read" | "save">) {}
+
+  private unclear() {
+    if (this.lastUnclearTurn !== this.turnCount) {
+      this.unclearTurns = this.lastUnclearTurn === this.turnCount - 1 ? this.unclearTurns + 1 : 1;
+      this.lastUnclearTurn = this.turnCount;
+    }
+    this.offer = this.unclearTurns >= 3;
+    return this.offer ? "HANDOFF_OFFERED" : "CLARIFICATION_REQUIRED";
+  }
+
+  private requestHandoff(reason: Handoff["reason"], now: Date) {
+    this.pending = null;
+    this.turn = null;
+    this.state = { ...this.state, awaiting_confirmation_revision: null, availability_revision: null };
+    try {
+      this.handoff = registerHandoff(handoffPath(this.store.path, this.sessionId), reason, now);
+      this.offer = false;
+      return { status: "ok" as const, code: "HANDOFF_REQUESTED", state: this.state };
+    } catch { return { status: "blocked" as const, code: "HANDOFF_FAILED", state: this.state }; }
+  }
 
   get confirmation() { return this.pending ?? this.turn?.confirmation; }
 
@@ -78,13 +105,28 @@ export class BookingController {
         return { status: "blocked" as const, code: "RESERVATION_ALREADY_SAVED", state: this.state };
       }
     }
+    const before = this.state;
     const previous = this.state.revision;
     const result = processAgentProposal(this.state, input, now, () => this.store.read());
     this.state = result.state;
+    if (result.code === "HANDOFF_PROPOSED") {
+      const reason = handoffReason.parse(result.data?.reason);
+      if (reason === "not_understood" && !this.handoff) return { status: "blocked" as const, code: "HANDOFF_CONSENT_REQUIRED", state: this.state };
+      return this.requestHandoff(reason, now);
+    }
+    if (this.handoff && result.status === "ok" && result.code !== "PUBLIC_INFO") {
+      this.state = before;
+      return { status: "blocked" as const, code: "HANDOFF_REQUESTED", state: this.state };
+    }
+    if (result.code === "CLARIFICATION_REQUIRED") return { ...result, code: this.unclear() };
     if (this.state.revision !== previous || result.code === "INVALID_AVAILABILITY" || result.code === "NO_AVAILABILITY") {
       this.pending = null;
       if (this.turn?.confirmation) { this.turn.confirmation.ready = false; this.turn.confirmation.reason = "STALE_CONFIRMATION"; }
-      if (this.state.revision !== previous) this.failures = 0;
+      if (this.state.revision !== previous) {
+        this.failures = 0;
+        this.offer = false;
+        this.unclearTurns = 0;
+      }
     }
     if (result.code === "AWAITING_USER_CONFIRMATION") {
       if (this.correctionRevision === this.state.revision) {
@@ -120,6 +162,7 @@ export class BookingController {
   beginTurn(id: string) {
     // Only a new audio turn after the complete summary can confirm it.
     if (this.turn?.id === id) return;
+    this.turnCount++;
     this.turn = { id, confirmation: this.pending };
     this.pending = null;
   }
@@ -128,6 +171,12 @@ export class BookingController {
     if (this.turn?.id !== id) return null;
     const confirmation = this.turn.confirmation;
     this.turn = null;
+    if (this.offer && !confirmation) {
+      this.offer = false;
+      this.unclearTurns = 0;
+      if (!uncertain && explicitAssent(transcript)) return { code: this.requestHandoff("not_understood", now).code };
+    }
+    if (!confirmation && !this.reservation && !this.handoff && (uncertain || !transcript.trim())) return { code: this.unclear() };
     if (!confirmation) return this.reservation ? { code: "RESERVATION_ALREADY_SAVED", reservation: this.reservation } : { code: "NOT_SAVED", reason: "NO_SUMMARY" };
     const words = transcript.toLocaleLowerCase("it").normalize("NFD").replace(/\p{M}/gu, "");
     if (negative.has(normalized(transcript))) {
@@ -147,6 +196,7 @@ export class BookingController {
       : !explicitAssent(transcript) ? "AMBIGUOUS_REPLY" : null;
     if (reason) {
       this.failures++;
+      if (this.failures >= 2) this.offer = true;
       return { code: this.failures >= 2 ? "VOICE_CONFIRMATION_FAILED" : "CONFIRMATION_REQUIRED", reason };
     }
     this.state = { ...this.state, availability_revision: null };

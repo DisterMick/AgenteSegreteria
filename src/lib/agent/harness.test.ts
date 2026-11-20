@@ -122,7 +122,7 @@ describe("agent harness: allowlist and boundaries", () => {
     const state = createAgentSessionState();
     expect(act(state, {
       type: "request_human_handoff", expected_revision: 0, reason: "user_request",
-    })).toMatchObject({ status: "blocked", code: "HANDOFF_NOT_IMPLEMENTED" });
+    })).toMatchObject({ status: "ok", code: "HANDOFF_PROPOSED" });
   });
 
   it("treats an injection-like customer name as data, not as a tool call", () => {
